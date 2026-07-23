@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}New Booking Request &mdash; HSRS{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <h1>New Booking Request</h1>
+    <p>Complete all required sections below. You may save as a draft and submit later.</p>
+  </div>
+
+  {% if errors %}
+  <div class="alert alert--error" style="margin-bottom:1.25rem">
+    <span class="alert__indicator">ERROR</span>
+    <span>Please correct the highlighted fields before submitting.</span>
+  </div>
+  {% endif %}
+
+  <form
+    method="post"
+    action="{% url 'booking:new-booking' %}"
+    x-data="bookingForm()"
+    id="booking-form"
+  >
+    {% csrf_token %}
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         1 — Requestor Information
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section-card">
+      <div class="section-card__head">
+        <span class="section-num">1</span>
+        <h3>Requestor Information</h3>
+      </div>
+      <div class="section-card__body">
+        <div class="form-grid">
+
+          <div class="form-field">
+            <label>Full Name</label>
+            <input type="text" value="{{ user.get_full_name|default:user.username }}" readonly>
+          </div>
+
+          <div class="form-field">
+            <label>Email Address</label>
+            <input type="email" value="{{ user.email }}" readonly>
+          </div>
+
+          <div class="form-field">
+            <label>Department</label>
+            <input type="text" value="{{ user.department|default:'—' }}" readonly>
+          </div>
+
+          <div class="form-field">
+            <label for="id_mobile_number">Contact Mobile <span class="required">*</span></label>
+            <input
+              type="tel"
+              id="id_mobile_number"
+              name="mobile_number"
+              value="{{ form_data.mobile_number|default:user.mobile_number }}"
+              placeholder="10-digit mobile number"
+              required
+            >
+            {% if errors.mobile_number %}
+            <span class="field-error">{{ errors.mobile_number }}</span>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         2 — Faculty In-Charge
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section-card">
+      <div class="section-card__head">
+        <span class="section-num">2</span>
+        <h3>Faculty In-Charge</h3>
+      </div>
+      <div class="section-card__body">
+
+        <div class="toggle-row" style="margin-bottom:1rem">
+          <input
+            type="checkbox"
+            id="id_is_faculty_incharge"
+            name="is_faculty_incharge"
+            x-model="isFacultyIncharge"
+          >
+          <label for="id_is_faculty_incharge">I am the Faculty In-Charge for this booking</label>
+        </div>
+
+        <div x-show="!isFacultyIncharge" x-transition>
+          <div class="form-grid form-grid--3">
+            <div class="form-field">
+              <label for="id_incharge_name">In-Charge Name <span class="required">*</span></label>
+              <input
+                type="text"
+                id="id_incharge_name"
+                name="incharge_name"
+                value="{{ form_data.incharge_name|default:'' }}"
+                :required="!isFacultyIncharge"
+                placeholder="Full name"
+              >
+              {% if errors.incharge_name %}
+              <span class="field-error">{{ errors.incharge_name }}</span>
+              {% endif %}
+            </div>
+
+            <div class="form-field">
+              <label for="id_incharge_email">In-Charge Email <span class="required">*</span></label>
+              <input
+                type="email"
+                id="id_incharge_email"
+                name="incharge_email"
+                value="{{ form_data.incharge_email|default:'' }}"
+                :required="!isFacultyIncharge"
+                placeholder="email@university.edu"
+              >
+              {% if errors.incharge_email %}
+              <span class="field-error">{{ errors.incharge_email }}</span>
+              {% endif %}
+            </div>
+
+            <div class="form-field">
+              <label for="id_incharge_mobile">In-Charge Mobile</label>
+              <input
+                type="tel"
+                id="id_incharge_mobile"
+                name="incharge_mobile"
+                value="{{ form_data.incharge_mobile|default:'' }}"
+                placeholder="Mobile number"
+              >
+            </div>
+          </div>
+        </div>
+
+        <div x-show="isFacultyIncharge" x-transition>
+          <div class="alert alert--info" style="font-size:0.855rem">
+            <span class="alert__indicator">NOTE</span>
+            <span>Your profile details will be used as the Faculty In-Charge contact.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         3 — Alternate Contacts
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section-card">
+      <div class="section-card__head">
+        <span class="section-num">3</span>
+        <h3>Alternate Contacts <span class="section-subtitle">(up to 4)</span></h3>
+      </div>
+      <div class="section-card__body">
+
+        <template x-for="(contact, index) in alternateContacts" :key="index">
+          <div class="repeater-item">
+            <div class="repeater-item__header">
+              <span class="repeater-item__label" x-text="'Contact ' + (index + 1)"></span>
+              <button type="button" class="repeater-remove" @click="removeContact(index)">Remove</button>
+            </div>
+            <div class="form-grid form-grid--3">
+              <div class="form-field">
+                <label>Name <span class="required">*</span></label>
+                <input type="text" name="contact_name" x-model="contact.name" placeholder="Full name" required>
+              </div>
+              <div class="form-field">
+                <label>Mobile <span class="required">*</span></label>
+                <input type="tel" name="contact_mobile" x-model="contact.mobile" placeholder="Mobile number" required>
+              </div>
+              <div class="form-field">
+                <label>Email</label>
+                <input type="email" name="contact_email" x-model="contact.email" placeholder="Email (optional)">
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <button
+          type="button"
+          class="btn-add-row"
+          @click="addContact()"
+          :disabled="alternateContacts.length >= 4"
+        >
+          + Add Alternate Contact
+          <span x-show="alternateContacts.length >= 4" style="color:var(--clr-text-muted)">&nbsp;(maximum reached)</span>
+        </button>
+
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         4 — Event and Guest House Details
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section-card">
+      <div class="section-card__head">
+        <span class="section-num">4</span>
+        <h3>Event &amp; Guest House Details</h3>
+      </div>
+      <div class="section-card__body">
+        <div class="form-grid">
+
+          <div class="form-field">
+            <label for="id_campus_id">Campus <span class="required">*</span></label>
+            <select
+              id="id_campus_id"
+              name="campus_id"
+              hx-get="{% url 'booking:htmx-guest-houses' %}"
+              hx-target="#guest-house-options"
+              hx-include="[name='campus_id']"
+              hx-trigger="change"
+            >
+              <option value="">— Select Campus —</option>
+              {% for campus in campuses %}
+              <option value="{{ campus.id }}" {% if form_data.campus_id == campus.id|stringformat:"s" %}selected{% endif %}>
+                {{ campus.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-field form-field--full" style="grid-column:1/-1">
+            <label for="id_purpose">Purpose of Booking <span class="required">*</span></label>
+            <textarea
+              id="id_purpose"
+              name="purpose_of_booking"
+              placeholder="Briefly describe the purpose of this accommodation request..."
+              required
+            >{{ form_data.purpose_of_booking|default:'' }}</textarea>
+            {% if errors.purpose_of_booking %}
+            <span class="field-error">{{ errors.purpose_of_booking }}</span>
+            {% endif %}
+          </div>
+
+          <div class="form-field">
+            <label for="id_event_id">Event</label>
+            <select
+              id="id_event_id"
+              name="event_id"
+              hx-get="{% url 'booking:htmx-event-date' %}"
+              hx-target="#event-date-field"
+              hx-include="[name='event_id']"
+              hx-trigger="change"
+            >
+              <option value="">— Select Event (optional) —</option>
+              {% for event in events %}
+              <option value="{{ event.id }}" data-date="{{ event.event_date|date:'Y-m-d' }}">
+                {{ event.name }} &mdash; {{ event.event_date|date:"d M Y" }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-field" id="event-date-field">
+            <label for="id_event_date">Event Date</label>
+            <input type="date" id="id_event_date" name="event_date" value="{{ form_data.event_date|default:'' }}">
+          </div>
+
+          <div class="form-field">
+            <label for="id_event_type">Event Type</label>
+            <select id="id_event_type" name="event_type">
+              <option value="">— Select Type —</option>
+              {% for et in event_type_choices %}
+              <option value="{{ et }}" {% if form_data.event_type == et %}selected{% endif %}>{{ et }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="id_guests_male">Male Guests</label>
+            <input type="number" id="id_guests_male" name="num_guests_male" value="{{ form_data.num_guests_male|default:'0' }}" min="0">
+          </div>
+
+          <div class="form-field">
+            <label for="id_guests_female">Female Guests</label>
+            <input type="number" id="id_guests_female" name="num_guests_female" value="{{ form_data.num_guests_female|default:'0' }}" min="0">
+          </div>
+
+          <div class="form-field">
+            <label for="id_num_rooms">Rooms Required <span class="required">*</span></label>
+            <input type="number" id="id_num_rooms" name="num_rooms_required" value="{{ form_data.num_rooms_required|default:'1' }}" min="1" required>
+          </div>
+
+          <div class="form-field form-field--full" style="grid-column:1/-1">
+            <div class="toggle-row">
+              <input
+                type="checkbox"
+                id="id_is_foreign_guest"
+                name="is_foreign_guest"
+                x-model="isForeignGuest"
+              >
+              <label for="id_is_foreign_guest">This booking includes guest(s) from outside India</label>
+            </div>
+
+            <div x-show="isForeignGuest" x-transition style="margin-top:0.65rem">
+              <div class="notice-box">
+                <strong>Form C Required.</strong> Foreign nationals must complete police registration (Form C) within 24 hours of arrival. The Guest House Team will provide this form at check-in.
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="id_guest_house">Preferred Guest House</label>
+            <select id="id_guest_house" name="preferred_guest_house_id">
+              <option value="">— Select a campus first —</option>
+              <span id="guest-house-options"></span>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="id_room_config">Room Configuration</label>
+            <select id="id_room_config" name="room_configuration">
+              <option value="">— Select —</option>
+              {% for rc in room_config_choices %}
+              <option value="{{ rc }}" {% if form_data.room_configuration == rc %}selected{% endif %}>{{ rc }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-field form-field--full" style="grid-column:1/-1">
+            <label for="id_special_requests">Special Requests</label>
+            <textarea id="id_special_requests" name="special_requests" placeholder="Accessibility requirements, dietary preferences, any other specific needs...">{{ form_data.special_requests|default:'' }}</textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         5 — Guest Details
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section-card">
+      <div class="section-card__head">
+        <span class="section-num">5</span>
+        <h3>Guest Details</h3>
+      </div>
+      <div class="section-card__body">
+
+        <template x-for="(guest, index) in guests" :key="index">
+          <div class="repeater-item" style="margin-bottom:0.875rem">
+            <div class="repeater-item__header">
+              <span class="repeater-item__label" x-text="'Guest ' + (index + 1)"></span>
+              <button
+                type="button"
+                class="repeater-remove"
+                @click="removeGuest(index)"
+                x-show="guests.length > 1"
+              >Remove</button>
+            </div>
+            <div class="form-grid form-grid--3">
+              <div class="form-field">
+                <label>Full Name <span class="required">*</span></label>
+                <input type="text" name="guest_name" x-model="guest.name" placeholder="Guest full name" required>
+              </div>
+              <div class="form-field">
+                <label>Mobile</label>
+                <input type="tel" name="guest_mobile" x-model="guest.mobile" placeholder="Mobile number">
+              </div>
+              <div class="form-field">
+                <label>Gender <span class="required">*</span></label>
+                <select name="guest_gender" x-model="guest.gender" required>
+                  <option value="">— Select —</option>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                  <option value="O">Other / Prefer not to say</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Email</label>
+                <input type="email" name="guest_email" x-model="guest.email" placeholder="guest@email.com">
+              </div>
+              <div class="form-field">
+                <label>Guest Type</label>
+                <select name="guest_type" x-model="guest.guestType">
+                  <option value="DOMESTIC">Domestic</option>
+                  <option value="FOREIGN">Foreign</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Check-in Date <span class="required">*</span></label>
+                <input type="date" name="guest_check_in" x-model="guest.checkIn" required>
+              </div>
+              <div class="form-field">
+                <label>Check-out Date <span class="required">*</span></label>
+                <input type="date" name="guest_check_out" x-model="guest.checkOut" required>
+              </div>
+              <div class="form-field form-field--full" style="grid-column:1/-1">
+                <label>Accessibility / Disability Needs</label>
+                <input type="text" name="guest_disability" x-model="guest.disability" placeholder="Leave blank if none">
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <button type="button" class="btn-add-row" @click="addGuest()">
+          + Add Another Guest
+        </button>
+
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         6 — Arrangements and Payment
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section-card">
+      <div class="section-card__head">
+        <span class="section-num">6</span>
+        <h3>Arrangements &amp; Payment</h3>
+      </div>
+      <div class="section-card__body">
+        <div class="form-grid">
+
+          <div class="form-field">
+            <label for="id_food">Food Arrangement</label>
+            <select id="id_food" name="food_arrangement">
+              {% for val, label in arrangement_choices %}
+              <option value="{{ val }}" {% if form_data.food_arrangement == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="id_travel">Travel Arrangement</label>
+            <select id="id_travel" name="travel_arrangement">
+              {% for val, label in arrangement_choices %}
+              <option value="{{ val }}" {% if form_data.travel_arrangement == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="id_transport">Local Transport</label>
+            <select id="id_transport" name="local_transport_arrangement">
+              {% for val, label in arrangement_choices %}
+              <option value="{{ val }}" {% if form_data.local_transport_arrangement == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="id_payment">Payment By</label>
+            <select id="id_payment" name="payment_arrangement">
+              {% for val, label in payment_choices %}
+              <option value="{{ val }}" {% if form_data.payment_arrangement == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-field form-field--full" style="grid-column:1/-1">
+            <label for="id_room_sharing">Room Sharing / Grouping Notes</label>
+            <textarea id="id_room_sharing" name="room_sharing_grouping" placeholder="Describe how guests should be grouped for room assignment, if applicable.">{{ form_data.room_sharing_grouping|default:'' }}</textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Action Buttons -->
+    <div class="btn-row">
+      <button type="submit" name="action" value="submit" class="btn btn--primary btn--lg" id="btn-submit">
+        Submit for Approval
+      </button>
+      <button type="submit" name="action" value="draft" class="btn btn--secondary btn--lg" id="btn-save-draft">
+        Save as Draft
+      </button>
+      <a href="{% url 'booking:my-bookings' %}" class="btn btn--ghost btn--lg">
+        Discard
+      </a>
+    </div>
+
+    <p class="text-xs text-muted" style="margin-top:0.65rem">
+      <strong>Save as Draft</strong> &mdash; saves your progress without submitting; return to complete and submit later.
+      <strong>Submit for Approval</strong> &mdash; sends immediately to the HOD/Director queue; the form cannot be edited after submission.
+    </p>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function bookingForm() {
+  return {
+    isFacultyIncharge: false,
+    isForeignGuest: false,
+    alternateContacts: [],
+    guests: [
+      { name: '', mobile: '', gender: '', email: '', guestType: 'DOMESTIC', checkIn: '', checkOut: '', disability: '' }
+    ],
+    addContact() {
+      if (this.alternateContacts.length < 4)
+        this.alternateContacts.push({ name: '', mobile: '', email: '' });
+    },
+    removeContact(index) { this.alternateContacts.splice(index, 1); },
+    addGuest() {
+      this.guests.push({ name: '', mobile: '', gender: '', email: '', guestType: 'DOMESTIC', checkIn: '', checkOut: '', disability: '' });
+    },
+    removeGuest(index) {
+      if (this.guests.length > 1) this.guests.splice(index, 1);
+    }
+  }
+}
+</script>
+{% endblock %}

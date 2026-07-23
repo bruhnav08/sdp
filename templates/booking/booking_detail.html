@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}{{ booking.booking_id|default:"Booking Detail" }} &mdash; HSRS{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <!-- Page Header -->
+  <div class="page-header page-header--split">
+    <div>
+      <a href="{% url 'booking:my-bookings' %}" class="text-xs text-muted" style="display:inline-block;margin-bottom:0.4rem">
+        &larr; Back to My Bookings
+      </a>
+      <h1>{{ booking.booking_id|default:"Draft Booking" }}</h1>
+      <p>
+        {% with s=booking.status %}
+        <span class="badge
+          {% if s == 'DRAFT' %}badge--draft
+          {% elif s == 'PENDING_HOD_APPROVAL' %}badge--pending-hod
+          {% elif s == 'PENDING_ALLOTMENT' %}badge--pending-allotment
+          {% elif s == 'PENDING_MANAGEMENT_APPROVAL' %}badge--pending-mgmt
+          {% elif s == 'CONFIRMED' %}badge--confirmed
+          {% elif s == 'REJECTED' %}badge--rejected
+          {% elif s == 'CANCELLED' %}badge--cancelled
+          {% endif %}">
+          {{ booking.get_status_display }}
+        </span>
+        {% endwith %}
+        &nbsp;&middot;&nbsp;
+        <span class="text-muted text-xs">Created {{ booking.created_at|date:"d M Y, g:i A" }}</span>
+      </p>
+    </div>
+
+    {% if can_cancel %}
+    <div>
+      <form method="post" action="{% url 'booking:booking-cancel' booking.pk %}" onsubmit="return confirm('Cancel this booking request?')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--danger" id="btn-cancel-booking">Cancel Booking</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if booking.status == 'REJECTED' %}
+  <div class="alert alert--error" style="margin-bottom:1.25rem">
+    <span class="alert__indicator">REJECTED</span>
+    <div>
+      <strong>This booking was rejected.</strong>
+      {% if booking.rejection_reason %}<br>Reason: {{ booking.rejection_reason }}{% endif %}
+      {% if booking.rejected_by %}<br>Rejected by: {{ booking.rejected_by.get_full_name|default:booking.rejected_by.username }}{% endif %}
+      {% if booking.rejection_stage %}<br>Stage at rejection: {{ booking.rejection_stage }}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if booking.requires_form_c %}
+  <div class="notice-box" style="margin-bottom:1.25rem">
+    <strong>Form C Required</strong> &mdash; This booking includes foreign nationals. Police registration (Form C) must be completed within 24 hours of arrival.
+  </div>
+  {% endif %}
+
+
+  <!-- Requestor -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card__header">
+      <div class="card__icon">RQ</div>
+      <div class="card__header-label">
+        <h3>Requestor</h3>
+      </div>
+    </div>
+    <div class="card__body">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-item__label">Name</div>
+          <div class="info-item__value">{{ booking.requestor.get_full_name|default:booking.requestor.username }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Email</div>
+          <div class="info-item__value">{{ booking.requestor.email }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Department</div>
+          <div class="info-item__value">{{ booking.requestor.department|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Contact Mobile</div>
+          <div class="info-item__value">{{ booking.mobile_number }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Faculty In-Charge -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card__header">
+      <div class="card__icon">FI</div>
+      <div class="card__header-label"><h3>Faculty In-Charge</h3></div>
+    </div>
+    <div class="card__body">
+      {% if booking.is_faculty_incharge %}
+      <div class="alert alert--info" style="font-size:0.855rem">
+        <span class="alert__indicator">NOTE</span>
+        <span>The requestor is acting as the Faculty In-Charge for this booking.</span>
+      </div>
+      {% else %}
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-item__label">Name</div>
+          <div class="info-item__value">{{ booking.incharge_name|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Email</div>
+          <div class="info-item__value">{{ booking.incharge_email|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Mobile</div>
+          <div class="info-item__value">{{ booking.incharge_mobile|default:"&mdash;" }}</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+
+  <!-- Event and Guest House -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card__header">
+      <div class="card__icon">EV</div>
+      <div class="card__header-label"><h3>Event &amp; Guest House</h3></div>
+    </div>
+    <div class="card__body">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-item__label">Campus</div>
+          <div class="info-item__value">{{ booking.campus_name|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Purpose</div>
+          <div class="info-item__value">{{ booking.purpose_of_booking }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Event</div>
+          <div class="info-item__value">{{ booking.event_name|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Event Date</div>
+          <div class="info-item__value">{{ booking.event_date|date:"d M Y"|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Event Type</div>
+          <div class="info-item__value">{{ booking.event_type|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Preferred Guest House</div>
+          <div class="info-item__value">{{ booking.preferred_guest_house_name|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Room Configuration</div>
+          <div class="info-item__value">{{ booking.room_configuration|default:"&mdash;" }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Rooms Required</div>
+          <div class="info-item__value">{{ booking.num_rooms_required }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Total Guests (M / F)</div>
+          <div class="info-item__value">
+            {{ booking.total_guests }} &mdash; {{ booking.num_guests_male }} Male / {{ booking.num_guests_female }} Female
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Foreign Guests</div>
+          <div class="info-item__value">
+            {% if booking.is_foreign_guest %}
+            <span class="badge badge--rejected">Yes &mdash; Form C Required</span>
+            {% else %}No{% endif %}
+          </div>
+        </div>
+      </div>
+      {% if booking.special_requests %}
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--clr-border)">
+        <div class="info-item__label">Special Requests</div>
+        <div class="info-item__value" style="margin-top:0.2rem">{{ booking.special_requests }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+
+  <!-- Guests Table -->
+  {% if booking.guests.exists %}
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card__header">
+      <div class="card__icon">GS</div>
+      <div class="card__header-label">
+        <h3>Guests &mdash; {{ booking.guests.count }} listed</h3>
+      </div>
+    </div>
+    <div style="overflow:hidden;border-radius:0 0 var(--radius-lg) var(--radius-lg)">
+      <div class="table-wrapper" style="border:none;border-radius:0;box-shadow:none">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Gender</th>
+              <th>Type</th>
+              <th>Check-in</th>
+              <th>Check-out</th>
+              <th>Mobile</th>
+              <th>Accessibility Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for guest in booking.guests.all %}
+            <tr>
+              <td class="td-muted">{{ forloop.counter }}</td>
+              <td style="font-weight:500">{{ guest.name }}</td>
+              <td>{{ guest.get_gender_display }}</td>
+              <td>{{ guest.get_guest_type_display }}</td>
+              <td>{{ guest.check_in|date:"d M Y" }}</td>
+              <td>{{ guest.check_out|date:"d M Y" }}</td>
+              <td class="td-muted">{{ guest.mobile|default:"&mdash;" }}</td>
+              <td class="td-muted">{{ guest.disability_needs|default:"&mdash;" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+
+  <!-- Arrangements -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card__header">
+      <div class="card__icon">AR</div>
+      <div class="card__header-label"><h3>Arrangements</h3></div>
+    </div>
+    <div class="card__body">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-item__label">Food</div>
+          <div class="info-item__value">{{ booking.get_food_arrangement_display }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Travel</div>
+          <div class="info-item__value">{{ booking.get_travel_arrangement_display }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Local Transport</div>
+          <div class="info-item__value">{{ booking.get_local_transport_arrangement_display }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-item__label">Payment By</div>
+          <div class="info-item__value">{{ booking.get_payment_arrangement_display }}</div>
+        </div>
+      </div>
+      {% if booking.room_sharing_grouping %}
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--clr-border)">
+        <div class="info-item__label">Room Sharing Notes</div>
+        <div class="info-item__value" style="margin-top:0.2rem">{{ booking.room_sharing_grouping }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+
+  <!-- Alternate Contacts -->
+  {% if booking.alternate_contacts.exists %}
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card__header">
+      <div class="card__icon">AC</div>
+      <div class="card__header-label"><h3>Alternate Contacts</h3></div>
+    </div>
+    <div class="card__body">
+      <div class="info-grid">
+        {% for contact in booking.alternate_contacts.all %}
+        <div class="info-item">
+          <div class="info-item__label">Contact {{ forloop.counter }}</div>
+          <div class="info-item__value">{{ contact.name }}</div>
+          <div class="text-xs text-muted" style="margin-top:0.15rem">
+            {{ contact.mobile }}{% if contact.email %} &middot; {{ contact.email }}{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

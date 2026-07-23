@@ -1,0 +1,263 @@
+[
+  {
+    "model": "room_inventory.campus",
+    "pk": 1,
+    "fields": {
+      "name": "Bangalore Kengeri Campus",
+      "location": "Kengeri, Bengaluru, Karnataka 560060",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.campus",
+    "pk": 2,
+    "fields": {
+      "name": "Bangalore Central Campus",
+      "location": "Rajajinagar, Bengaluru, Karnataka 560010",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.campus",
+    "pk": 3,
+    "fields": {
+      "name": "Bangalore Bannerghatta Road Campus",
+      "location": "Bannerghatta Road, Bengaluru, Karnataka 560083",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.campus",
+    "pk": 4,
+    "fields": {
+      "name": "Bangalore Yeshwanthpur Campus",
+      "location": "Yeshwanthpur, Bengaluru, Karnataka 560022",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.campus",
+    "pk": 5,
+    "fields": {
+      "name": "Delhi NCR Campus",
+      "location": "Sector 62, Noida, Uttar Pradesh 201309",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.campus",
+    "pk": 6,
+    "fields": {
+      "name": "Pune Lavasa Campus",
+      "location": "Lavasa, Pune, Maharashtra 412112",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.guesthouse",
+    "pk": 1,
+    "fields": {
+      "name": "Faculty Guest House",
+      "campus": 1,
+      "total_rooms": 24,
+      "contact_number": "9876543210",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.guesthouse",
+    "pk": 2,
+    "fields": {
+      "name": "University Guest House",
+      "campus": 1,
+      "total_rooms": 18,
+      "contact_number": "9876543211",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.guesthouse",
+    "pk": 3,
+    "fields": {
+      "name": "International Guest House",
+      "campus": 2,
+      "total_rooms": 20,
+      "contact_number": "9876543212",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.guesthouse",
+    "pk": 4,
+    "fields": {
+      "name": "Executive Suite Block",
+      "campus": 2,
+      "total_rooms": 10,
+      "contact_number": "9876543213",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.guesthouse",
+    "pk": 5,
+    "fields": {
+      "name": "Staff Guest House",
+      "campus": 3,
+      "total_rooms": 14,
+      "contact_number": "9876543214",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.guesthouse",
+    "pk": 6,
+    "fields": {
+      "name": "Visitor's Residence",
+      "campus": 4,
+      "total_rooms": 12,
+      "contact_number": "9876543215",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.guesthouse",
+    "pk": 7,
+    "fields": {
+      "name": "Delhi Academic Guest House",
+      "campus": 5,
+      "total_rooms": 16,
+      "contact_number": "9876543216",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.guesthouse",
+    "pk": 8,
+    "fields": {
+      "name": "Lavasa Guest Retreat",
+      "campus": 6,
+      "total_rooms": 22,
+      "contact_number": "9876543217",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.event",
+    "pk": 1,
+    "fields": {
+      "name": "Annual Research Conference 2025",
+      "event_date": "2025-09-15",
+      "campus": 1,
+      "description": "University-wide annual research conference — invited speakers and guest delegates.",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.event",
+    "pk": 2,
+    "fields": {
+      "name": "International Symposium on AI and ML",
+      "event_date": "2025-10-20",
+      "campus": 2,
+      "description": "International symposium on Artificial Intelligence and Machine Learning.",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.event",
+    "pk": 3,
+    "fields": {
+      "name": "Faculty Development Workshop",
+      "event_date": "2025-11-05",
+      "campus": 1,
+      "description": "Three-day intensive faculty development programme.",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.event",
+    "pk": 4,
+    "fields": {
+      "name": "Alumni Reunion 2025",
+      "event_date": "2025-12-05",
+      "campus": 4,
+      "description": "Annual alumni meet and networking reunion.",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.event",
+    "pk": 5,
+    "fields": {
+      "name": "Board of Governors Meeting Q4",
+      "event_date": "2025-12-22",
+      "campus": 5,
+      "description": "Quarterly board meeting — external governors and senior administration attending.",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.event",
+    "pk": 6,
+    "fields": {
+      "name": "National Sports Championship",
+      "event_date": "2026-01-18",
+      "campus": 3,
+      "description": "Inter-university national sports championship — athletes and officials.",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "room_inventory.event",
+    "pk": 7,
+    "fields": {
+      "name": "Industry-Academia Summit",
+      "event_date": "2026-02-10",
+      "campus": 6,
+      "description": "Lavasa campus industry-academia collaboration summit.",
+      "is_active": true,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  }
+]

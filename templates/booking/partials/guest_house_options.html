@@ -1,0 +1,8 @@
+<!-- HTMX partial: guest house <option> list for the booking form dropdown -->
+{% if guest_houses %}
+  {% for gh in guest_houses %}
+  <option value="{{ gh.id }}">{{ gh.name }} ({{ gh.total_rooms }} rooms)</option>
+  {% endfor %}
+{% else %}
+  <option value="" disabled>No guest houses available for selected campus</option>
+{% endif %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}My Booking Requests &mdash; HSRS{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <div class="page-header page-header--split">
+    <div>
+      <h1>My Booking Requests</h1>
+      <p>All guest room booking requests submitted by you.</p>
+    </div>
+    <a href="{% url 'booking:new-booking' %}" class="btn btn--primary" id="btn-new-booking">
+      New Booking Request
+    </a>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <form method="get" style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">
+      <label style="font-size:0.75rem;font-weight:600;color:var(--clr-text-muted);text-transform:uppercase;letter-spacing:0.4px">
+        Filter:
+      </label>
+      <select name="status" onchange="this.form.submit()" style="max-width:220px">
+        <option value="">All Statuses</option>
+        {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      {% if current_status %}
+      <a href="{% url 'booking:my-bookings' %}" class="btn btn--ghost btn--sm">Clear filter</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if bookings %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Booking ID</th>
+          <th>Status</th>
+          <th>Campus</th>
+          <th>Event / Purpose</th>
+          <th>Guests</th>
+          <th>Rooms</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+        <tr>
+          <td>
+            <a href="{% url 'booking:booking-detail' booking.pk %}" style="font-weight:600;color:var(--clr-accent)">
+              {{ booking.booking_id|default:"Draft" }}
+            </a>
+          </td>
+          <td>
+            {% with s=booking.status %}
+            <span class="badge
+              {% if s == 'DRAFT' %}badge--draft
+              {% elif s == 'PENDING_HOD_APPROVAL' %}badge--pending-hod
+              {% elif s == 'PENDING_ALLOTMENT' %}badge--pending-allotment
+              {% elif s == 'PENDING_MANAGEMENT_APPROVAL' %}badge--pending-mgmt
+              {% elif s == 'CONFIRMED' %}badge--confirmed
+              {% elif s == 'REJECTED' %}badge--rejected
+              {% elif s == 'CANCELLED' %}badge--cancelled
+              {% endif %}">
+              {{ booking.get_status_display }}
+            </span>
+            {% endwith %}
+          </td>
+          <td class="td-muted">{{ booking.campus_name|default:"&mdash;" }}</td>
+          <td>
+            <span style="font-size:0.855rem">
+              {{ booking.event_name|default:booking.purpose_of_booking|truncatechars:45 }}
+            </span>
+            {% if booking.event_date %}
+            <br><span class="td-muted">{{ booking.event_date|date:"d M Y" }}</span>
+            {% endif %}
+          </td>
+          <td class="td-muted">{{ booking.total_guests }}</td>
+          <td class="td-muted">{{ booking.num_rooms_required }}</td>
+          <td class="td-muted">{{ booking.created_at|date:"d M Y" }}</td>
+          <td>
+            <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
+              <a href="{% url 'booking:booking-detail' booking.pk %}" class="btn btn--ghost btn--sm">View</a>
+              {% if booking.is_cancellable %}
+              <form method="post" action="{% url 'booking:booking-cancel' booking.pk %}" onsubmit="return confirm('Cancel this booking request?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn--danger btn--sm">Cancel</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}" class="btn btn--ghost btn--sm">Previous</a>
+    {% endif %}
+    <span class="pagination__info">Page {{ page_obj.number }} of {{ page_obj.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}" class="btn btn--ghost btn--sm">Next</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state__icon">&#x2205;</div>
+      <h3>No booking requests found</h3>
+      <p>
+        {% if current_status %}
+          No bookings with the selected status. <a href="{% url 'booking:my-bookings' %}">Clear filter</a>
+        {% else %}
+          You have not submitted any guest room booking requests yet.
+        {% endif %}
+      </p>
+      {% if not current_status %}
+      <a href="{% url 'booking:new-booking' %}" class="btn btn--primary" style="margin-top:1rem">
+        Create Your First Booking
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

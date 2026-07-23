@@ -1,0 +1,12 @@
+<!-- HTMX partial: auto-fills the event_date input when an event is selected -->
+<label for="id_event_date">Event Date</label>
+<input
+  type="date"
+  id="id_event_date"
+  name="event_date"
+  value="{{ event.event_date|date:'Y-m-d'|default:'' }}"
+  {% if event %}style="border-color:var(--clr-success)"{% endif %}
+>
+{% if event %}
+<span class="field-hint" style="color:var(--clr-success)">✓ Auto-filled from selected event</span>
+{% endif %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} &mdash; HSRS{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="page-header">
+    <h1>{{ page_title }}</h1>
+  </div>
+  <div class="card">
+    <div class="card__body" style="text-align:center;padding:3.5rem 2rem">
+      <div style="width:56px;height:56px;border:2px dashed var(--clr-border-dk);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;color:var(--clr-text-muted);font-size:1rem;font-weight:700">
+        WIP
+      </div>
+      <h2 style="margin-bottom:0.65rem;color:var(--clr-text)">Under Construction</h2>
+      <p style="color:var(--clr-text-muted);max-width:480px;margin:0 auto 1.5rem;font-size:0.875rem">
+        {{ message }}
+      </p>
+      <a href="{% url 'booking:my-bookings' %}" class="btn btn--secondary">Back to My Bookings</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
