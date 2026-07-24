@@ -14,7 +14,10 @@
   {% if errors %}
   <div class="alert alert--error" style="margin-bottom:1.25rem">
     <span class="alert__indicator">ERROR</span>
-    <span>Please correct the highlighted fields before submitting.</span>
+    <div>
+      Please correct the highlighted fields before submitting.
+      {% if errors.guest_dates %}<br><strong>{{ errors.guest_dates }}</strong>{% endif %}
+    </div>
   </div>
   {% endif %}
 
@@ -23,6 +26,7 @@
     action="{% url 'booking:new-booking' %}"
     x-data="bookingForm()"
     id="booking-form"
+    @submit="validateForm($event)"
   >
     {% csrf_token %}
 
@@ -389,7 +393,7 @@
               </div>
               <div class="form-field">
                 <label>Check-out Date <span class="required">*</span></label>
-                <input type="date" name="guest_check_out" x-model="guest.checkOut" required>
+                <input type="date" name="guest_check_out" x-model="guest.checkOut" :min="guest.checkIn" required>
               </div>
               <div class="form-field form-field--full" style="grid-column:1/-1">
                 <label>Accessibility / Disability Needs</label>
@@ -506,6 +510,17 @@ function bookingForm() {
     },
     removeGuest(index) {
       if (this.guests.length > 1) this.guests.splice(index, 1);
+    },
+    validateForm(e) {
+      for (let i = 0; i < this.guests.length; i++) {
+        let g = this.guests[i];
+        if (g.checkIn && g.checkOut && new Date(g.checkOut) <= new Date(g.checkIn)) {
+          alert("Error: Guest " + (i + 1) + " Check-out date must be after Check-in date.");
+          e.preventDefault();
+          return false;
+        }
+      }
+      return true;
     }
   }
 }

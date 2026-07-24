@@ -134,3 +134,37 @@ class HousekeepingModule2Test(TestCase):
         api_client.force_authenticate(user=self.staff_user)
         self.assertEqual(api_client.get(f"{api_url}?room={self.room1.pk}").status_code, 200)
 
+    def test_housekeeping_dashboard_dynamic_booking_synchronization(self):
+        """Verify dynamic confirmed bookings reflect as Booked/Occupied in housekeeping dashboard counts and rows."""
+        from django.utils import timezone
+        from booking.models import BookingRequest, Guest
+
+        req_user = User.objects.create_user(username="req_hk_sync", password="password123", role=User.Role.REQUESTOR)
+        booking = BookingRequest.objects.create(
+            requestor=req_user,
+            mobile_number="9876543210",
+            is_faculty_incharge=True,
+            purpose_of_booking="Conference",
+        )
+        today = timezone.localdate()
+        Guest.objects.create(
+            booking=booking,
+            name="John Doe",
+            gender="M",
+            check_in=today,
+            check_out=today + timezone.timedelta(days=2),
+        )
+
+        booking.submit(req_user)
+        booking.approve_by_hod(self.staff_user)
+        booking.allot_room(self.staff_user, room=self.room1)
+        booking.approve_by_management(self.staff_user)
+
+        url = reverse("housekeeping_ui:dashboard")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Booked")
+        self.assertContains(response, "John Doe")
+        self.assertContains(response, booking.booking_id)
+
+

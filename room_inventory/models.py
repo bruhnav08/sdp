@@ -153,7 +153,89 @@ class Room(TimeStampedModel):
         Only rooms marked as Vacant Clean are available for new bookings.
         Under Maintenance, Vacant Dirty, Cleaning In Progress, Occupied, and Blocked are NOT available.
         """
+        if self.get_current_booking():
+            return False
         return self.is_active and self.status in (self.Status.VACANT_CLEAN, "AVAILABLE")
+
+    def get_current_booking(self, date=None):
+        from django.utils import timezone
+        if date is None:
+            date = timezone.localdate()
+
+        from booking.models import BookingRequest
+        allotted_statuses = [
+            BookingRequest.Status.CONFIRMED,
+            BookingRequest.Status.PENDING_MANAGEMENT_APPROVAL,
+            BookingRequest.Status.ON_HOLD,
+            BookingRequest.Status.QUERY_RAISED,
+        ]
+
+        bookings = BookingRequest.objects.filter(
+            allotted_room=self,
+            status__in=allotted_statuses
+        ).prefetch_related('guests')
+
+        for booking in bookings:
+            for guest in booking.guests.all():
+                if guest.check_in <= date < guest.check_out:
+                    return booking
+        return None
+
+    def is_available_for_period(self, check_in, check_out, exclude_booking_pk=None):
+        if not self.is_active or self.status in (self.Status.UNDER_MAINTENANCE, self.Status.BLOCKED):
+            return False
+
+        from booking.models import BookingRequest
+        allotted_statuses = [
+            BookingRequest.Status.CONFIRMED,
+            BookingRequest.Status.PENDING_MANAGEMENT_APPROVAL,
+            BookingRequest.Status.ON_HOLD,
+            BookingRequest.Status.QUERY_RAISED,
+        ]
+
+        bookings = BookingRequest.objects.filter(
+            allotted_room=self,
+            status__in=allotted_statuses
+        )
+        if exclude_booking_pk:
+            bookings = bookings.exclude(pk=exclude_booking_pk)
+
+        for b in bookings.prefetch_related('guests'):
+            for g in b.guests.all():
+                if max(g.check_in, check_in) < min(g.check_out, check_out):
+                    return False
+        return True
+
+    @property
+    def dynamic_status(self) -> str:
+        """
+        Dynamically determine room status based on current active bookings/allotments.
+        """
+        if not self.is_active:
+            return "INACTIVE"
+        if self.status in (self.Status.UNDER_MAINTENANCE, self.Status.BLOCKED):
+            return self.status
+
+        booking = self.get_current_booking()
+        if booking:
+            from booking.models import BookingRequest
+            if booking.status == BookingRequest.Status.CONFIRMED:
+                return "BOOKED"
+            else:
+                return "RESERVED"
+        return self.status
+
+    def get_dynamic_status_display(self) -> str:
+        ds = self.dynamic_status
+        if ds == "BOOKED":
+            return "Booked"
+        if ds == "RESERVED":
+            return "Reserved"
+        for val, label in self.Status.choices:
+            if val == ds:
+                return label
+        return ds
+
 
 
 class Event(TimeStampedModel):

@@ -78,11 +78,31 @@ class RoomAvailabilityView(APIView):
         except GuestHouse.DoesNotExist:
             return Response({"error": "Guest house not found."}, status=404)
 
+        from datetime import datetime
+        check_in_date = None
+        check_out_date = None
+        if check_in and check_out:
+            try:
+                check_in_date = datetime.strptime(check_in, "%Y-%m-%d").date()
+                check_out_date = datetime.strptime(check_out, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+
         total_defined_rooms = gh.rooms.filter(is_active=True).count()
         if total_defined_rooms > 0:
-            available_rooms = gh.rooms.filter(is_active=True, status=Room.Status.VACANT_CLEAN).count()
-            under_maintenance_rooms = gh.rooms.filter(is_active=True, status=Room.Status.UNDER_MAINTENANCE).count()
-            blocked_rooms = gh.rooms.filter(is_active=True, status=Room.Status.BLOCKED).count()
+            rooms_qs = gh.rooms.filter(is_active=True)
+            under_maintenance_rooms = rooms_qs.filter(status=Room.Status.UNDER_MAINTENANCE).count()
+            blocked_rooms = rooms_qs.filter(status=Room.Status.BLOCKED).count()
+            
+            # Count rooms that are dynamically available for the period
+            available_rooms = 0
+            for r in rooms_qs.filter(status=Room.Status.VACANT_CLEAN):
+                if check_in_date and check_out_date:
+                    if r.is_available_for_period(check_in_date, check_out_date):
+                        available_rooms += 1
+                else:
+                    if r.is_available_for_booking:
+                        available_rooms += 1
         else:
             available_rooms = gh.total_rooms
             under_maintenance_rooms = 0
@@ -109,6 +129,7 @@ class RoomAvailabilityView(APIView):
         )
 
 
+
 class EventListView(APIView):
     """GET /api/rooms/events/?campus=<id>"""
 
@@ -129,13 +150,14 @@ class EventListView(APIView):
 def guesthouse_list(request):
     """View all guest houses with quick stats and room drill-down."""
     ensure_default_amenities()
-    guest_houses = GuestHouse.objects.all().select_related("campus").annotate(
-        room_count=Count("rooms", filter=Q(rooms__is_active=True)),
-        available_count=Count("rooms", filter=Q(rooms__is_active=True, rooms__status=Room.Status.VACANT_CLEAN)),
-        maintenance_count=Count("rooms", filter=Q(rooms__is_active=True, rooms__status=Room.Status.UNDER_MAINTENANCE)),
-        blocked_count=Count("rooms", filter=Q(rooms__is_active=True, rooms__status=Room.Status.BLOCKED)),
-        category_count=Count("categories", filter=Q(categories__is_active=True)),
-    )
+    guest_houses = list(GuestHouse.objects.all().select_related("campus"))
+    for gh in guest_houses:
+        rooms = list(gh.rooms.filter(is_active=True))
+        gh.room_count = len(rooms)
+        gh.maintenance_count = sum(1 for r in rooms if r.status == Room.Status.UNDER_MAINTENANCE)
+        gh.blocked_count = sum(1 for r in rooms if r.status == Room.Status.BLOCKED)
+        gh.category_count = gh.categories.filter(is_active=True).count()
+        gh.available_count = sum(1 for r in rooms if r.is_available_for_booking)
 
     example_houses = ["KE Hall", "DVK Guest House", "Jonas Hall", "Auditorium Block", "Sports Complex"]
     existing_names = set(gh.name for gh in guest_houses)
@@ -149,6 +171,7 @@ def guesthouse_list(request):
             "quick_add_examples": quick_add_examples,
         },
     )
+
 
 
 @login_required
@@ -203,14 +226,43 @@ def guesthouse_delete(request, pk):
     return render(request, "room_inventory/guesthouse_confirm_delete.html", {"guesthouse": gh})
 
 
+def attach_current_bookings_to_rooms(rooms):
+    from django.utils import timezone
+    from booking.models import BookingRequest
+    date = timezone.localdate()
+
+    allotted_statuses = [
+        BookingRequest.Status.CONFIRMED,
+        BookingRequest.Status.PENDING_MANAGEMENT_APPROVAL,
+        BookingRequest.Status.ON_HOLD,
+        BookingRequest.Status.QUERY_RAISED,
+    ]
+
+    bookings = BookingRequest.objects.filter(
+        allotted_room__in=rooms,
+        status__in=allotted_statuses
+    ).prefetch_related('guests', 'requestor')
+
+    room_booking_map = {}
+    for b in bookings:
+        for g in b.guests.all():
+            if g.check_in <= date < g.check_out:
+                room_booking_map[b.allotted_room_id] = b
+                break
+
+    for r in rooms:
+        r.current_booking = room_booking_map.get(r.pk)
+
+
 @login_required
 @role_required(User.Role.ADMIN, User.Role.GUEST_HOUSE_TEAM)
 def guesthouse_rooms(request, pk):
-
     """View all rooms belonging to a specific guest house."""
     gh = get_object_or_404(GuestHouse, pk=pk)
-    rooms = gh.rooms.all().select_related("room_category").prefetch_related("amenities")
+    rooms = list(gh.rooms.all().select_related("room_category").prefetch_related("amenities"))
+    attach_current_bookings_to_rooms(rooms)
     return render(request, "room_inventory/guesthouse_rooms.html", {"guesthouse": gh, "rooms": rooms})
+
 
 
 # ── Room Category Views ───────────────────────────────────────────────────────
@@ -318,11 +370,14 @@ def room_list(request):
     categories = RoomCategory.objects.filter(is_active=True)
     amenities = Amenity.objects.filter(is_active=True)
 
+    rooms_list = list(rooms)
+    attach_current_bookings_to_rooms(rooms_list)
+
     return render(
         request,
         "room_inventory/room_list.html",
         {
-            "rooms": rooms,
+            "rooms": rooms_list,
             "guest_houses": guest_houses,
             "categories": categories,
             "amenities": amenities,

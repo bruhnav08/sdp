@@ -14,20 +14,33 @@
     </div>
   </td>
   <td style="padding: 1rem;">
-    {% if room.status == "VACANT_CLEAN" %}
-    <span class="status-badge status--vacant-clean">Vacant Clean</span>
-    {% elif room.status == "VACANT_DIRTY" %}
-    <span class="status-badge status--vacant-dirty">Vacant Dirty</span>
-    {% elif room.status == "CLEANING_IN_PROGRESS" %}
-    <span class="status-badge status--cleaning-in-progress">Cleaning In Progress</span>
-    {% elif room.status == "OCCUPIED" %}
-    <span class="status-badge status--occupied">Occupied</span>
-    {% elif room.status == "UNDER_MAINTENANCE" %}
-    <span class="status-badge status--under-maintenance">Under Maintenance</span>
-    {% elif room.status == "BLOCKED" %}
-    <span class="status-badge status--blocked">Blocked</span>
+    {% if room.current_booking %}
+      {% if room.dynamic_status == "BOOKED" %}
+      <span class="status-badge status--occupied" style="background-color: var(--clr-primary); color: #fff;">Booked</span>
+      {% else %}
+      <span class="status-badge status--cleaning-in-progress" style="background-color: var(--clr-accent-amber); color: #fff;">Reserved</span>
+      {% endif %}
+      <div style="font-size: 0.75rem; margin-top: 0.35rem; line-height: 1.2;">
+        <div>Guest: <strong>{{ room.current_booking.guests.first.name|default:room.current_booking.requestor.get_full_name }}</strong></div>
+        <div>Ref: <a href="{% url 'booking:booking-detail' room.current_booking.pk %}">{{ room.current_booking.booking_id }}</a></div>
+        <div>Dates: {{ room.current_booking.guests.first.check_in|date:"d M" }} - {{ room.current_booking.guests.first.check_out|date:"d M Y" }}</div>
+      </div>
     {% else %}
-    <span class="status-badge status--vacant-clean">{{ room.get_status_display }}</span>
+      {% if room.status == "VACANT_CLEAN" %}
+      <span class="status-badge status--vacant-clean">Vacant Clean</span>
+      {% elif room.status == "VACANT_DIRTY" %}
+      <span class="status-badge status--vacant-dirty">Vacant Dirty</span>
+      {% elif room.status == "CLEANING_IN_PROGRESS" %}
+      <span class="status-badge status--cleaning-in-progress">Cleaning In Progress</span>
+      {% elif room.status == "OCCUPIED" %}
+      <span class="status-badge status--occupied">Occupied</span>
+      {% elif room.status == "UNDER_MAINTENANCE" %}
+      <span class="status-badge status--under-maintenance">Under Maintenance</span>
+      {% elif room.status == "BLOCKED" %}
+      <span class="status-badge status--blocked">Blocked</span>
+      {% else %}
+      <span class="status-badge status--vacant-clean">{{ room.get_status_display }}</span>
+      {% endif %}
     {% endif %}
   </td>
   <td style="padding: 1rem; font-size: 0.8rem; color: var(--clr-text-muted);">

@@ -162,3 +162,61 @@ class Module1RoomInventoryTest(TestCase):
         res_create = self.client.get(reverse("inventory:guesthouse-create"))
         self.assertEqual(res_create.status_code, 200)
 
+    def test_room_status_synchronization(self):
+        """Verify dynamic status of Room shifts to RESERVED/BOOKED and back based on booking state and dates."""
+        from django.utils import timezone
+        from booking.models import BookingRequest, Guest
+        
+        # Create a room instance
+        room = Room.objects.create(
+            room_number="999",
+            floor="1",
+            capacity=1,
+            guest_house=self.ke_hall,
+            room_category=self.cat_single,
+            status=Room.Status.VACANT_CLEAN,
+        )
+        
+        self.assertEqual(room.dynamic_status, "VACANT_CLEAN")
+
+        # Create requestor and booking
+        req_user = User.objects.create_user(username="req_test_sync", password="password123", role=User.Role.REQUESTOR)
+        booking = BookingRequest.objects.create(
+            requestor=req_user,
+            mobile_number="9876543210",
+            is_faculty_incharge=True,
+            purpose_of_booking="Board Meeting",
+        )
+        # Create guest to set dates
+        today = timezone.localdate()
+        tomorrow = today + timezone.timedelta(days=1)
+        Guest.objects.create(
+            booking=booking,
+            name="Alice",
+            gender="F",
+            check_in=today,
+            check_out=tomorrow,
+        )
+        
+        booking.submit(req_user)
+        self.assertEqual(room.dynamic_status, "VACANT_CLEAN")
+
+        # Allot room to booking
+        booking.approve_by_hod(self.user)
+        booking.allot_room(self.user, room=room)
+        
+        # Verify dynamic status is RESERVED (Allotted, pending Mgmt approval)
+        self.assertEqual(room.dynamic_status, "RESERVED")
+
+        # Confirm booking
+        booking.approve_by_management(self.user)
+        
+        # Verify dynamic status is BOOKED
+        self.assertEqual(room.dynamic_status, "BOOKED")
+
+        # Revert to vacant clean on cancel
+        booking.status = BookingRequest.Status.CANCELLED
+        booking.save()
+        self.assertEqual(room.dynamic_status, "VACANT_CLEAN")
+
+

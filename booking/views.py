@@ -344,6 +344,20 @@ class BookingFormView(LoginRequiredMixin, View):
             if not incharge_email:
                 errors["incharge_email"] = "Faculty in-charge email is required."
 
+        # Guest date validation: check-out must be after check-in
+        guest_names = data.getlist("guest_name")
+        guest_check_ins = data.getlist("guest_check_in")
+        guest_check_outs = data.getlist("guest_check_out")
+        for i, g_name in enumerate(guest_names):
+            g_name = g_name.strip()
+            if not g_name:
+                continue
+            ci = guest_check_ins[i] if i < len(guest_check_ins) else None
+            co = guest_check_outs[i] if i < len(guest_check_outs) else None
+            if ci and co and co <= ci:
+                errors["guest_dates"] = "Check-out date must be after check-in date."
+                break
+
         if errors:
             ctx = self._get_context()
             ctx.update({"user": request.user, "errors": errors, "form_data": data})
@@ -496,7 +510,18 @@ class BookingDetailView(LoginRequiredMixin, DetailView):
         ctx["can_respond_alternative"] = (booking.requestor == user or user.is_admin_user) and booking.status == BookingRequest.Status.ALTERNATIVE_PROPOSED
 
         if ctx["can_allot_act"]:
-            ctx["available_rooms"] = Room.objects.filter(is_active=True).select_related("guest_house", "room_category")
+            check_in = booking.check_in_date
+            check_out = booking.check_out_date
+            all_rooms = Room.objects.filter(is_active=True, status=Room.Status.VACANT_CLEAN).select_related("guest_house", "room_category")
+            
+            available_for_period = []
+            if check_in and check_out:
+                for r in all_rooms:
+                    if r.is_available_for_period(check_in, check_out, exclude_booking_pk=booking.pk):
+                        available_for_period.append(r)
+            else:
+                available_for_period = list(all_rooms)
+            ctx["available_rooms"] = available_for_period
 
         ctx["approval_history"] = booking.approval_history.all()
         return ctx

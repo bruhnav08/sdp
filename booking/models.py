@@ -262,6 +262,16 @@ class BookingRequest(TimeStampedModel):
         label = self.booking_id or f"DRAFT-{self.pk}"
         return f"{label} — {self.requestor} [{self.get_status_display()}]"
 
+    @property
+    def check_in_date(self):
+        guest = self.guests.first()
+        return guest.check_in if guest else None
+
+    @property
+    def check_out_date(self):
+        guest = self.guests.first()
+        return guest.check_out if guest else None
+
     # ── ID Generator & Guards ─────────────────────────────────────────────────
 
     @staticmethod

@@ -51,6 +51,11 @@
   <a href="{% url 'housekeeping:dashboard' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">Housekeeping</a>
   {% endif %}
 
+  {% if user.is_superuser %}
+  <span class="navbar__divider"></span>
+  <a href="/admin/" target="_blank" style="color: rgba(255,255,255,0.75); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem;">Django Admin</a>
+  {% endif %}
+
   <div class="navbar__spacer"></div>
 
   <div class="navbar__actions">
@@ -59,7 +64,13 @@
     <div class="navbar__user-info">
       <div class="navbar__avatar">{{ user.first_name|first|upper|default:user.username|first|upper }}</div>
       <span>{{ user.get_full_name|default:user.username }}</span>
-      <span class="navbar__role-tag">{{ user.get_role_display }}</span>
+      <span class="navbar__role-tag">
+        {% if user.is_superuser or user.is_staff or user.role == 'ADMIN' %}
+          Admin
+        {% else %}
+          {{ user.get_role_display }}
+        {% endif %}
+      </span>
     </div>
 
     <form method="post" action="{% url 'accounts:logout' %}">

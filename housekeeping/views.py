@@ -52,13 +52,16 @@ class RoomStatusView(APIView):
 # ── Web UI Views ──────────────────────────────────────────────────────────────
 
 @login_required
+@login_required
 @role_required(User.Role.GUEST_HOUSE_TEAM, User.Role.ADMIN)
 def dashboard_view(request):
     """
     Enterprise Housekeeping & Room Status Dashboard.
     Provides stat cards, filter controls, live inventory table, and action triggers.
     """
-    rooms = Room.objects.filter(is_active=True).select_related("guest_house", "room_category").prefetch_related("amenities", "status_history")
+    from room_inventory.views import attach_current_bookings_to_rooms
+
+    rooms_qs = Room.objects.filter(is_active=True).select_related("guest_house", "room_category").prefetch_related("amenities", "status_history")
 
     gh_id = request.GET.get("guest_house")
     cat_id = request.GET.get("category")
@@ -66,38 +69,45 @@ def dashboard_view(request):
     search = request.GET.get("search")
 
     if gh_id:
-        rooms = rooms.filter(guest_house_id=gh_id)
+        rooms_qs = rooms_qs.filter(guest_house_id=gh_id)
     if cat_id:
-        rooms = rooms.filter(room_category_id=cat_id)
-    if status:
-        rooms = rooms.filter(status=status)
+        rooms_qs = rooms_qs.filter(room_category_id=cat_id)
     if search:
-        rooms = rooms.filter(Q(room_number__icontains=search) | Q(guest_house__name__icontains=search))
+        rooms_qs = rooms_qs.filter(Q(room_number__icontains=search) | Q(guest_house__name__icontains=search))
 
-    # Compute overall stats across all active rooms (or filtered)
-    all_rooms = Room.objects.filter(is_active=True)
+    rooms_list = list(rooms_qs)
+    attach_current_bookings_to_rooms(rooms_list)
+
+    if status:
+        rooms_list = [r for r in rooms_list if r.dynamic_status == status or r.status == status]
+
+    # Compute overall stats across all active rooms (or filtered by GH)
+    all_rooms_qs = Room.objects.filter(is_active=True)
     if gh_id:
-        all_rooms = all_rooms.filter(guest_house_id=gh_id)
+        all_rooms_qs = all_rooms_qs.filter(guest_house_id=gh_id)
 
-    total_rooms = all_rooms.count()
-    vacant_clean_count = all_rooms.filter(status=Room.Status.VACANT_CLEAN).count()
-    vacant_dirty_count = all_rooms.filter(status=Room.Status.VACANT_DIRTY).count()
-    cleaning_progress_count = all_rooms.filter(status=Room.Status.CLEANING_IN_PROGRESS).count()
-    occupied_count = all_rooms.filter(status=Room.Status.OCCUPIED).count()
-    maintenance_count = all_rooms.filter(status=Room.Status.UNDER_MAINTENANCE).count()
+    all_rooms_list = list(all_rooms_qs)
+    attach_current_bookings_to_rooms(all_rooms_list)
+
+    total_rooms = len(all_rooms_list)
+    vacant_clean_count = sum(1 for r in all_rooms_list if r.dynamic_status == Room.Status.VACANT_CLEAN)
+    vacant_dirty_count = sum(1 for r in all_rooms_list if r.dynamic_status == Room.Status.VACANT_DIRTY)
+    cleaning_progress_count = sum(1 for r in all_rooms_list if r.dynamic_status == Room.Status.CLEANING_IN_PROGRESS)
+    occupied_count = sum(1 for r in all_rooms_list if r.dynamic_status in (Room.Status.OCCUPIED, "BOOKED", "RESERVED"))
+    maintenance_count = sum(1 for r in all_rooms_list if r.dynamic_status in (Room.Status.UNDER_MAINTENANCE, Room.Status.BLOCKED))
 
     # Annotate actions for each room
-    room_list = []
-    for r in rooms:
+    for r in rooms_list:
         r.available_actions = get_available_actions(r)
         r.last_history = r.status_history.first()
-        room_list.append(r)
 
     guest_houses = GuestHouse.objects.filter(is_active=True)
     categories = RoomCategory.objects.filter(is_active=True)
 
+    status_choices = list(Room.Status.choices) + [("BOOKED", "Booked"), ("RESERVED", "Reserved")]
+
     context = {
-        "rooms": room_list,
+        "rooms": rooms_list,
         "total_rooms": total_rooms,
         "vacant_clean_count": vacant_clean_count,
         "vacant_dirty_count": vacant_dirty_count,
@@ -106,7 +116,7 @@ def dashboard_view(request):
         "maintenance_count": maintenance_count,
         "guest_houses": guest_houses,
         "categories": categories,
-        "statuses": Room.Status.choices,
+        "statuses": status_choices,
         "selected_gh": int(gh_id) if gh_id and gh_id.isdigit() else None,
         "selected_cat": int(cat_id) if cat_id and cat_id.isdigit() else None,
         "selected_status": status,

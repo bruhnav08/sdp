@@ -85,12 +85,24 @@ class User(AbstractUser):
         Return the URL the user should be redirected to after login.
         Used by accounts/views.py DashboardRedirectView.
         """
+        from django.urls import reverse
+        try:
+            admin_url = reverse("inventory:guesthouse-list")
+        except Exception:
+            admin_url = "/inventory/guest-houses/manage/"
+
         role_url_map = {
             self.Role.REQUESTOR: "/booking/my-bookings/",
             self.Role.FACULTY_INCHARGE: "/booking/my-bookings/",
             self.Role.HOD_DIRECTOR: "/booking/approvals/",
             self.Role.GUEST_HOUSE_TEAM: "/booking/allotment/",
             self.Role.MANAGEMENT: "/booking/approvals/management/",
-            self.Role.ADMIN: "/admin/",
+            self.Role.ADMIN: admin_url,
         }
         return role_url_map.get(self.role, "/booking/my-bookings/")
+
+    def save(self, *args, **kwargs):
+        if (self.is_superuser or self.is_staff) and self.role != self.Role.ADMIN:
+            self.role = self.Role.ADMIN
+        super().save(*args, **kwargs)
+
