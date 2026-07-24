@@ -7,21 +7,15 @@ Serializers
 -----------
 AlternateContactSerializer — nested write for alternate contacts (max 4)
 GuestSerializer            — nested write for individual guests
+ApprovalHistorySerializer  — nested read for approval audit history timeline
+NotificationLogSerializer  — notifications list for workflow events
 BookingRequestSerializer   — full create/update with nested writes + validation
 BookingRequestListSerializer — lightweight for list views (no nested details)
-
-Validation rules (server-side — never trust client-only validation)
--------------------------------------------------------------------
-- purpose_of_booking is always mandatory
-- If is_faculty_incharge is False: incharge_name and incharge_email are required
-- Maximum 4 alternate contacts
-- Guest check_out must be after check_in
-- On submit action: all mandatory fields must be present (enforced in view)
 """
 
 from rest_framework import serializers
 
-from booking.models import AlternateContact, BookingRequest, Guest
+from booking.models import AlternateContact, ApprovalHistory, BookingRequest, Guest, NotificationLog
 
 
 class AlternateContactSerializer(serializers.ModelSerializer):
@@ -65,6 +59,28 @@ class GuestSerializer(serializers.ModelSerializer):
         return data
 
 
+class ApprovalHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ApprovalHistory
+        fields = [
+            "id",
+            "user",
+            "user_name",
+            "role",
+            "action",
+            "comments",
+            "previous_status",
+            "new_status",
+            "created_at",
+        ]
+
+
+class NotificationLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationLog
+        fields = ["id", "booking", "title", "message", "is_read", "created_at"]
+
+
 class BookingRequestListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for list views — omits nested details."""
 
@@ -97,43 +113,41 @@ class BookingRequestListSerializer(serializers.ModelSerializer):
 
 class BookingRequestSerializer(serializers.ModelSerializer):
     """
-    Full serializer with nested guests and alternate contacts.
-    Supports both create (POST) and update (PATCH/PUT).
-    Requestor is set automatically from request.user.
+    Full serializer with nested guests, alternate contacts, and approval history.
     """
 
-    # Nested collections — writable
     guests = GuestSerializer(many=True, required=False, default=list)
     alternate_contacts = AlternateContactSerializer(many=True, required=False, default=list)
+    approval_history = ApprovalHistorySerializer(many=True, read_only=True)
 
-    # Read-only derived fields from the requestor
     requestor_name = serializers.SerializerMethodField()
     requestor_email = serializers.SerializerMethodField()
     requestor_department = serializers.SerializerMethodField()
     requestor_campus = serializers.SerializerMethodField()
     status_display = serializers.CharField(source="get_status_display", read_only=True)
 
+    allotted_room_number = serializers.SerializerMethodField()
+    allotted_guest_house_name = serializers.SerializerMethodField()
+    proposed_room_number = serializers.SerializerMethodField()
+    proposed_guest_house_name = serializers.SerializerMethodField()
+
     class Meta:
         model = BookingRequest
         fields = [
-            # Identity
             "id",
             "booking_id",
             "status",
             "status_display",
-            # Requestor (auto-populated)
             "requestor",
             "requestor_name",
             "requestor_email",
             "requestor_department",
             "requestor_campus",
             "mobile_number",
-            # Faculty in-charge
             "is_faculty_incharge",
             "incharge_name",
             "incharge_email",
             "incharge_mobile",
-            # Campus / Event
             "campus_id",
             "campus_name",
             "purpose_of_booking",
@@ -141,30 +155,37 @@ class BookingRequestSerializer(serializers.ModelSerializer):
             "event_name",
             "event_date",
             "event_type",
-            # Guest counts
             "num_guests_male",
             "num_guests_female",
             "num_rooms_required",
-            # Foreign guest
             "is_foreign_guest",
-            # Guest house
             "preferred_guest_house_id",
             "preferred_guest_house_name",
             "room_configuration",
             "special_requests",
-            # Arrangements
+            "allotted_room",
+            "allotted_room_number",
+            "allotted_guest_house",
+            "allotted_guest_house_name",
+            "proposed_room",
+            "proposed_room_number",
+            "proposed_guest_house",
+            "proposed_guest_house_name",
+            "proposed_note",
+            "query_text",
+            "query_stage",
+            "query_response",
+            "hold_reason",
             "food_arrangement",
             "travel_arrangement",
             "local_transport_arrangement",
             "payment_arrangement",
             "room_sharing_grouping",
-            # Rejection
             "rejection_reason",
             "rejection_stage",
-            # Nested
             "guests",
             "alternate_contacts",
-            # Timestamps
+            "approval_history",
             "created_at",
             "updated_at",
         ]
@@ -178,13 +199,25 @@ class BookingRequestSerializer(serializers.ModelSerializer):
             "requestor_email",
             "requestor_department",
             "requestor_campus",
+            "allotted_room",
+            "allotted_room_number",
+            "allotted_guest_house",
+            "allotted_guest_house_name",
+            "proposed_room",
+            "proposed_room_number",
+            "proposed_guest_house",
+            "proposed_guest_house_name",
+            "proposed_note",
+            "query_text",
+            "query_stage",
+            "query_response",
+            "hold_reason",
             "rejection_reason",
             "rejection_stage",
+            "approval_history",
             "created_at",
             "updated_at",
         ]
-
-    # ── Read-only derived getters ─────────────────────────────────────────────
 
     def get_requestor_name(self, obj) -> str:
         return obj.requestor.get_full_name() or obj.requestor.username
@@ -198,7 +231,17 @@ class BookingRequestSerializer(serializers.ModelSerializer):
     def get_requestor_campus(self, obj) -> str:
         return obj.requestor.campus
 
-    # ── Validation ────────────────────────────────────────────────────────────
+    def get_allotted_room_number(self, obj) -> str:
+        return obj.allotted_room.room_number if obj.allotted_room else ""
+
+    def get_allotted_guest_house_name(self, obj) -> str:
+        return obj.allotted_guest_house.name if obj.allotted_guest_house else ""
+
+    def get_proposed_room_number(self, obj) -> str:
+        return obj.proposed_room.room_number if obj.proposed_room else ""
+
+    def get_proposed_guest_house_name(self, obj) -> str:
+        return obj.proposed_guest_house.name if obj.proposed_guest_house else ""
 
     def validate_alternate_contacts(self, value):
         if len(value) > 4:
@@ -208,11 +251,6 @@ class BookingRequestSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        """
-        Cross-field validation.
-        - If the requestor is NOT the faculty in-charge, incharge details are required.
-        - purpose_of_booking is always required (also enforced at model level).
-        """
         is_faculty_incharge = data.get(
             "is_faculty_incharge",
             getattr(self.instance, "is_faculty_incharge", False),
@@ -230,13 +268,10 @@ class BookingRequestSerializer(serializers.ModelSerializer):
 
         return data
 
-    # ── Create with nested writes ─────────────────────────────────────────────
-
     def create(self, validated_data):
         guests_data = validated_data.pop("guests", [])
         contacts_data = validated_data.pop("alternate_contacts", [])
 
-        # Requestor is always the logged-in user
         validated_data["requestor"] = self.context["request"].user
 
         booking = BookingRequest.objects.create(**validated_data)
@@ -249,10 +284,7 @@ class BookingRequestSerializer(serializers.ModelSerializer):
 
         return booking
 
-    # ── Update with nested writes ─────────────────────────────────────────────
-
     def update(self, instance, validated_data):
-        # Only DRAFT bookings may be updated
         if instance.status != BookingRequest.Status.DRAFT:
             raise serializers.ValidationError(
                 "Only bookings in DRAFT status can be edited."
@@ -265,7 +297,6 @@ class BookingRequestSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
 
-        # Full replacement of nested collections when provided
         if guests_data is not None:
             instance.guests.all().delete()
             for guest_data in guests_data:

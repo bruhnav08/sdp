@@ -62,7 +62,10 @@
               {% if s == 'DRAFT' %}badge--draft
               {% elif s == 'PENDING_HOD_APPROVAL' %}badge--pending-hod
               {% elif s == 'PENDING_ALLOTMENT' %}badge--pending-allotment
+              {% elif s == 'ALTERNATIVE_PROPOSED' %}badge--pending-allotment
               {% elif s == 'PENDING_MANAGEMENT_APPROVAL' %}badge--pending-mgmt
+              {% elif s == 'ON_HOLD' %}badge--rejected
+              {% elif s == 'QUERY_RAISED' %}badge--pending-hod
               {% elif s == 'CONFIRMED' %}badge--confirmed
               {% elif s == 'REJECTED' %}badge--rejected
               {% elif s == 'CANCELLED' %}badge--cancelled

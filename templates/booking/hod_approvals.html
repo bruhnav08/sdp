@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Pending HOD Approvals &mdash; HSRS{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+
+  <div class="page-header page-header--split">
+    <div>
+      <h1>Pending HOD Approvals</h1>
+      <p class="text-muted">Review booking requests submitted by faculty and staff in your department.</p>
+    </div>
+  </div>
+
+  {% if pending_bookings.exists %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Booking ID</th>
+          <th>Requestor</th>
+          <th>Campus / Event</th>
+          <th>Rooms / Guests</th>
+          <th>Submitted Date</th>
+          <th>Status</th>
+          <th style="text-align:right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in pending_bookings %}
+        <tr>
+          <td style="font-weight:600">
+            <a href="{% url 'booking:booking-detail' b.pk %}">{{ b.booking_id|default:"Draft" }}</a>
+          </td>
+          <td>
+            <strong>{{ b.requestor.get_full_name|default:b.requestor.username }}</strong>
+            <div class="text-xs text-muted">{{ b.requestor.email }}</div>
+          </td>
+          <td>
+            <div>{{ b.campus_name|default:"&mdash;" }}</div>
+            <div class="text-xs text-muted">{{ b.purpose_of_booking|truncatechars:35 }}</div>
+          </td>
+          <td>
+            {{ b.num_rooms_required }} Room(s)
+            <div class="text-xs text-muted">{{ b.total_guests }} Guest(s)</div>
+          </td>
+          <td class="td-muted">{{ b.created_at|date:"d M Y, g:i A" }}</td>
+          <td>
+            <span class="badge badge--pending-hod">{{ b.get_status_display }}</span>
+          </td>
+          <td style="text-align:right">
+            <a href="{% url 'booking:booking-detail' b.pk %}" class="btn btn--outline btn--sm">Review Request</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card card--empty">
+    <h3>No Pending Approvals</h3>
+    <p class="text-muted">There are no booking requests currently awaiting HOD approval.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

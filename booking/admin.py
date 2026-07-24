@@ -7,7 +7,7 @@ Django Admin registrations for the booking app.
 from django.contrib import admin
 from django.utils.html import format_html
 
-from booking.models import AlternateContact, BookingRequest, Guest
+from booking.models import AlternateContact, ApprovalHistory, BookingRequest, Guest, NotificationLog
 
 
 class GuestInline(admin.TabularInline):
@@ -22,6 +22,13 @@ class AlternateContactInline(admin.TabularInline):
     extra = 0
     fields = ("name", "mobile", "email")
     max_num = 4
+
+
+class ApprovalHistoryInline(admin.TabularInline):
+    model = ApprovalHistory
+    extra = 0
+    readonly_fields = ("user_name", "role", "action", "comments", "previous_status", "new_status", "created_at")
+    can_delete = False
 
 
 @admin.register(BookingRequest)
@@ -44,11 +51,14 @@ class BookingRequestAdmin(admin.ModelAdmin):
         "requestor",
         "rejection_stage",
         "rejected_by",
+        "hod_approved_by",
+        "allotted_by",
+        "management_approved_by",
         "created_at",
         "updated_at",
     )
     ordering = ("-created_at",)
-    inlines = [GuestInline, AlternateContactInline]
+    inlines = [GuestInline, AlternateContactInline, ApprovalHistoryInline]
 
     fieldsets = (
         ("Identity", {"fields": ("booking_id", "status", "requestor")}),
@@ -65,8 +75,24 @@ class BookingRequestAdmin(admin.ModelAdmin):
             {"fields": ("num_guests_male", "num_guests_female", "num_rooms_required", "is_foreign_guest")},
         ),
         (
-            "Guest House",
-            {"fields": ("preferred_guest_house_id", "preferred_guest_house_name", "room_configuration", "special_requests")},
+            "Guest House & Allotment",
+            {
+                "fields": (
+                    "preferred_guest_house_id",
+                    "preferred_guest_house_name",
+                    "room_configuration",
+                    "allotted_room",
+                    "allotted_guest_house",
+                    "proposed_room",
+                    "proposed_guest_house",
+                    "proposed_note",
+                    "special_requests",
+                )
+            },
+        ),
+        (
+            "Queries & Holds",
+            {"fields": ("query_text", "query_stage", "query_response", "hold_reason"), "classes": ("collapse",)},
         ),
         (
             "Arrangements",
@@ -81,8 +107,18 @@ class BookingRequestAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Rejection Audit",
-            {"fields": ("rejection_reason", "rejected_by", "rejection_stage"), "classes": ("collapse",)},
+            "Rejection & Approvers",
+            {
+                "fields": (
+                    "rejection_reason",
+                    "rejected_by",
+                    "rejection_stage",
+                    "hod_approved_by",
+                    "allotted_by",
+                    "management_approved_by",
+                ),
+                "classes": ("collapse",),
+            },
         ),
         ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
@@ -92,7 +128,10 @@ class BookingRequestAdmin(admin.ModelAdmin):
             "DRAFT": "#94a3b8",
             "PENDING_HOD_APPROVAL": "#f59e0b",
             "PENDING_ALLOTMENT": "#3b82f6",
+            "ALTERNATIVE_PROPOSED": "#0284c7",
             "PENDING_MANAGEMENT_APPROVAL": "#8b5cf6",
+            "ON_HOLD": "#d97706",
+            "QUERY_RAISED": "#ea580c",
             "CONFIRMED": "#10b981",
             "REJECTED": "#ef4444",
             "CANCELLED": "#64748b",
@@ -124,3 +163,17 @@ class GuestAdmin(admin.ModelAdmin):
 class AlternateContactAdmin(admin.ModelAdmin):
     list_display = ("name", "mobile", "email", "booking")
     search_fields = ("name", "booking__booking_id")
+
+
+@admin.register(ApprovalHistory)
+class ApprovalHistoryAdmin(admin.ModelAdmin):
+    list_display = ("booking", "action", "user_name", "role", "previous_status", "new_status", "created_at")
+    list_filter = ("action", "role", "previous_status", "new_status")
+    search_fields = ("booking__booking_id", "user_name", "comments")
+
+
+@admin.register(NotificationLog)
+class NotificationLogAdmin(admin.ModelAdmin):
+    list_display = ("user", "title", "booking", "is_read", "created_at")
+    list_filter = ("is_read", "created_at")
+    search_fields = ("user__username", "title", "message")
