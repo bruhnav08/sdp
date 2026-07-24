@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Housekeeping & Room Status Dashboard — HSRS{% endblock %}
+
+{% block extra_head %}
+<style>
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .stat-card {
+    background: var(--clr-surface);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    border: 1px solid var(--clr-border);
+    box-shadow: var(--shadow-xs);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: var(--transition);
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-card__val {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 0.5rem;
+  }
+  .stat-card__lbl {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--clr-text-muted);
+  }
+  
+  /* Status Color Themes */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .status--vacant-clean {
+    background: var(--clr-success-bg);
+    color: var(--clr-success);
+    border: 1px solid rgba(22, 163, 74, 0.3);
+  }
+  .status--vacant-dirty {
+    background: var(--clr-danger-bg);
+    color: var(--clr-danger);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+  .status--cleaning-in-progress {
+    background: var(--clr-warning-bg);
+    color: var(--clr-warning);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+  }
+  .status--occupied {
+    background: var(--clr-info-bg);
+    color: var(--clr-info);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+  }
+  .status--under-maintenance {
+    background: var(--clr-surface-alt);
+    color: var(--clr-text-muted);
+    border: 1px solid var(--clr-border-dk);
+  }
+  .status--blocked {
+    background: #f3e8ff;
+    color: #7e22ce;
+    border: 1px solid #d8b4fe;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">Housekeeping & Room Status Dashboard</h1>
+      <p style="color: var(--clr-text-muted); margin-top: 0.25rem;">Real-time room operational status, cleaning workflow, and audit log tracking.</p>
+    </div>
+  </div>
+
+  <!-- Summary Stat Cards -->
+  <div class="stat-grid">
+    <div class="stat-card" style="border-left: 4px solid var(--clr-primary);">
+      <div class="stat-card__lbl">🏢 Total Rooms</div>
+      <div class="stat-card__val" style="color: var(--clr-text);">{{ total_rooms }}</div>
+    </div>
+
+    <div class="stat-card" style="border-left: 4px solid var(--clr-success);">
+      <div class="stat-card__lbl">🟢 Vacant Clean</div>
+      <div class="stat-card__val" style="color: var(--clr-success);">{{ vacant_clean_count }}</div>
+    </div>
+
+    <div class="stat-card" style="border-left: 4px solid var(--clr-danger);">
+      <div class="stat-card__lbl">🔴 Vacant Dirty</div>
+      <div class="stat-card__val" style="color: var(--clr-danger);">{{ vacant_dirty_count }}</div>
+    </div>
+
+    <div class="stat-card" style="border-left: 4px solid var(--clr-warning);">
+      <div class="stat-card__lbl">🧹 In Progress</div>
+      <div class="stat-card__val" style="color: var(--clr-warning);">{{ cleaning_progress_count }}</div>
+    </div>
+
+    <div class="stat-card" style="border-left: 4px solid var(--clr-info);">
+      <div class="stat-card__lbl">👤 Occupied</div>
+      <div class="stat-card__val" style="color: var(--clr-info);">{{ occupied_count }}</div>
+    </div>
+
+    <div class="stat-card" style="border-left: 4px solid var(--clr-text-muted);">
+      <div class="stat-card__lbl">🛠️ Maintenance</div>
+      <div class="stat-card__val" style="color: var(--clr-text-muted);">{{ maintenance_count }}</div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: end;">
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Guest House</label>
+        <select name="guest_house" class="form-control" onchange="this.form.submit()">
+          <option value="">All Guest Houses</option>
+          {% for gh in guest_houses %}
+          <option value="{{ gh.pk }}" {% if selected_gh == gh.pk %}selected{% endif %}>{{ gh.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Room Category</label>
+        <select name="category" class="form-control" onchange="this.form.submit()">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.pk }}" {% if selected_cat == cat.pk %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Operational Status</label>
+        <select name="status" class="form-control" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          {% for val, label in statuses %}
+          <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Search Room #</label>
+        <input type="text" name="search" class="form-control" placeholder="Room number..." value="{{ search_query }}">
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn--primary" style="flex: 1;">Filter</button>
+        <a href="{% url 'housekeeping:dashboard' %}" class="btn btn--outline">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Live Inventory Table -->
+  {% if rooms %}
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="table" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: var(--clr-surface-alt); text-align: left; font-size: 0.875rem; color: var(--clr-text-muted);">
+          <th style="padding: 1rem;">Guest House</th>
+          <th style="padding: 1rem;">Room Number</th>
+          <th style="padding: 1rem;">Floor</th>
+          <th style="padding: 1rem;">Category</th>
+          <th style="padding: 1rem;">Capacity</th>
+          <th style="padding: 1rem;">Amenities</th>
+          <th style="padding: 1rem;">Current Status</th>
+          <th style="padding: 1rem;">Last Updated</th>
+          <th style="padding: 1rem; text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for room in rooms %}
+          {% include "housekeeping/_room_row.html" %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card" style="text-align: center; padding: 3rem;">
+    <p style="font-size: 1.125rem; color: var(--clr-text-muted);">No rooms found matching criteria.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

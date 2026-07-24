@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Room — {{ room.room_number }}{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width: 500px;">
+  <div class="card" style="text-align: center; padding: 2rem;">
+    <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--clr-danger); margin-top: 0;">Confirm Deletion</h1>
+    <p style="font-size: 1rem; margin-bottom: 1.5rem;">Are you sure you want to delete <strong>Room {{ room.room_number }}</strong> ({{ room.guest_house.name }})?</p>
+
+    <form method="post" style="display: flex; gap: 1rem; justify-content: center;">
+      {% csrf_token %}
+      <a href="{% url 'room_inventory:room-list' %}" class="btn btn--outline">Cancel</a>
+      <button type="submit" class="btn btn--danger">Delete Room</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

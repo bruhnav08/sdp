@@ -45,10 +45,12 @@ urlpatterns = [
     # ── Booking REST API ──────────────────────────────────────────────────────
     path("api/", include(api_router.urls)),
 
-    # ── Room Inventory stub API ───────────────────────────────────────────────
+    # ── Room Inventory Web UI & API ───────────────────────────────────────────
+    path("inventory/", include("room_inventory.urls", namespace="inventory")),
     path("api/rooms/", include("room_inventory.urls", namespace="room_inventory")),
 
-    # ── Housekeeping stub API ─────────────────────────────────────────────────
+    # ── Housekeeping Web UI & API ─────────────────────────────────────────────
+    path("housekeeping/", include("housekeeping.urls", namespace="housekeeping_ui")),
     path("api/housekeeping/", include("housekeeping.urls", namespace="housekeeping")),
 
     # ── JWT token endpoints ───────────────────────────────────────────────────

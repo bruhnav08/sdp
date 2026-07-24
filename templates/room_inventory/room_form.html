@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — Room Inventory Management{% endblock %}
+
+{% block extra_head %}
+<style>
+  .amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+    background: var(--clr-surface-alt);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--clr-border);
+    list-style: none;
+    margin: 0;
+  }
+  .amenities-grid label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width: 650px;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'room_inventory:room-list' %}" style="color: var(--clr-accent); text-decoration: none; font-size: 0.875rem;">← Back to Rooms</a>
+    <h1 style="font-size: 1.5rem; font-weight: 700; margin-top: 0.5rem;">{{ title }}</h1>
+  </div>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Room Number *</label>
+          {{ form.room_number }}
+          {% if form.room_number.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.room_number.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Floor *</label>
+          {{ form.floor }}
+          {% if form.floor.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.floor.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Guest House *</label>
+          {{ form.guest_house }}
+          {% if form.guest_house.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.guest_house.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Room Category</label>
+          {{ form.room_category }}
+          {% if form.room_category.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.room_category.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Capacity (Guests) *</label>
+          {{ form.capacity }}
+          {% if form.capacity.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.capacity.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Initial Status *</label>
+          {{ form.status }}
+          <span style="font-size: 0.75rem; color: var(--clr-text-muted);">Note: Rooms marked as 'Under Maintenance' are excluded from availability.</span>
+          {% if form.status.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.status.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <label style="font-weight: 600;">Amenities</label>
+          <a href="{% url 'room_inventory:amenity-list' %}" style="font-size: 0.8rem; color: var(--clr-accent);">+ Manage / Add Custom Amenities</a>
+        </div>
+        {{ form.amenities }}
+        {% if form.amenities.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.amenities.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        {{ form.is_active }}
+        <label style="font-weight: 500;">Active Room</label>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <a href="{% url 'room_inventory:room-list' %}" class="btn btn--outline">Cancel</a>
+        <button type="submit" class="btn btn--primary">Save Room</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

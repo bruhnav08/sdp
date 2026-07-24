@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — Room Inventory Management{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width: 650px;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'room_inventory:category-list' %}" style="color: var(--clr-accent); text-decoration: none; font-size: 0.875rem;">← Back to Room Categories</a>
+    <h1 style="font-size: 1.5rem; font-weight: 700; margin-top: 0.5rem;">{{ title }}</h1>
+  </div>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Category Name *</label>
+        {{ form.name }}
+        <span style="font-size: 0.75rem; color: var(--clr-text-muted);">Examples: Single, Double King, Double Queen, Double Twin</span>
+        {% if form.name.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.name.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Associate with Guest House</label>
+        {{ form.guest_house }}
+        <span style="font-size: 0.75rem; color: var(--clr-text-muted);">Select a guest house to associate this category, or leave blank for all.</span>
+        {% if form.guest_house.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.guest_house.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Default Capacity (Guests)</label>
+        {{ form.default_capacity }}
+        {% if form.default_capacity.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.default_capacity.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Description</label>
+        {{ form.description }}
+        {% if form.description.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.description.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        {{ form.is_active }}
+        <label style="font-weight: 500;">Active category</label>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <a href="{% url 'room_inventory:category-list' %}" class="btn btn--outline">Cancel</a>
+        <button type="submit" class="btn btn--primary">Save Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

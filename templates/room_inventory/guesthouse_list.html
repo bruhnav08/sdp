@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Guest Houses — Room Inventory Management{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">Guest House Management</h1>
+      <p style="color: var(--clr-text-muted); margin-top: 0.25rem;">Manage guest house facilities, categories, and rooms.</p>
+    </div>
+    <div>
+      <a href="{% url 'room_inventory:guesthouse-create' %}" class="btn btn--primary">+ Add Guest House</a>
+    </div>
+  </div>
+
+  <!-- Sub Navigation -->
+  <div style="display: flex; gap: 0.75rem; border-bottom: 2px solid var(--clr-border); padding-bottom: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap;">
+    <a href="{% url 'room_inventory:guesthouse-list' %}" class="btn btn--secondary" style="border-color: var(--clr-accent); color: var(--clr-accent); font-weight: 600;">Guest Houses</a>
+    <a href="{% url 'room_inventory:category-list' %}" class="btn btn--outline">Room Categories</a>
+    <a href="{% url 'room_inventory:room-list' %}" class="btn btn--outline">All Rooms</a>
+    <a href="{% url 'room_inventory:amenity-list' %}" class="btn btn--outline">Amenities</a>
+  </div>
+
+  {% if quick_add_examples %}
+  <!-- Quick Add Example Guest Houses -->
+  <div class="card" style="margin-bottom: 2rem; background: var(--clr-surface-alt); border-left: 4px solid var(--clr-accent);">
+    <h3 style="font-size: 1rem; font-weight: 600; margin-top: 0; margin-bottom: 0.5rem;">⚡ Quick Add Example Guest Houses</h3>
+    <p style="color: var(--clr-text-muted); font-size: 0.875rem; margin-bottom: 0.75rem;">Click any example below to pre-fill and create:</p>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      {% for example in quick_add_examples %}
+      <a href="{% url 'room_inventory:guesthouse-create' %}?quick_add={{ example|urlencode }}" class="btn btn--sm btn--outline" style="background: var(--clr-surface);">+ {{ example }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Guest Houses Grid -->
+  {% if guest_houses %}
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+    {% for gh in guest_houses %}
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 4px solid var(--clr-primary);">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+          <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">{{ gh.name }}</h2>
+          {% if gh.is_active %}
+          <span class="badge badge--success">Active</span>
+          {% else %}
+          <span class="badge badge--warning">Inactive</span>
+          {% endif %}
+        </div>
+
+        {% if gh.campus %}
+        <p style="font-size: 0.875rem; color: var(--clr-text-muted); margin-bottom: 1rem;">📍 {{ gh.campus.name }}</p>
+        {% endif %}
+
+        {% if gh.description %}
+        <p style="font-size: 0.875rem; color: var(--clr-text); margin-bottom: 1rem;">{{ gh.description }}</p>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; background: var(--clr-bg); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; text-align: center;">
+          <div>
+            <div style="font-size: 1.125rem; font-weight: 700; color: var(--clr-success);">{{ gh.available_count }}</div>
+            <div style="font-size: 0.75rem; color: var(--clr-text-muted);">Available</div>
+          </div>
+          <div>
+            <div style="font-size: 1.125rem; font-weight: 700; color: var(--clr-danger);">{{ gh.maintenance_count }}</div>
+            <div style="font-size: 0.75rem; color: var(--clr-text-muted);">Maintenance</div>
+          </div>
+          <div>
+            <div style="font-size: 1.125rem; font-weight: 700; color: var(--clr-warning);">{{ gh.blocked_count }}</div>
+            <div style="font-size: 0.75rem; color: var(--clr-text-muted);">Blocked</div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.875rem; color: var(--clr-text-muted); margin-bottom: 1rem;">
+          <div><strong>Total Rooms:</strong> {{ gh.room_count }}</div>
+          {% if gh.contact_number %}
+          <div><strong>Contact:</strong> {{ gh.contact_number }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; pt: 1rem; border-top: 1px solid var(--clr-border);">
+        <a href="{% url 'room_inventory:guesthouse-rooms' gh.pk %}" class="btn btn--sm btn--primary" style="flex: 1; text-align: center;">View Rooms ({{ gh.room_count }})</a>
+        <a href="{% url 'room_inventory:guesthouse-edit' gh.pk %}" class="btn btn--sm btn--outline">Edit</a>
+        <a href="{% url 'room_inventory:guesthouse-delete' gh.pk %}" class="btn btn--sm btn--danger">Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card" style="text-align: center; padding: 3rem;">
+    <p style="font-size: 1.125rem; color: var(--clr-text-muted);">No guest houses found.</p>
+    <a href="{% url 'room_inventory:guesthouse-create' %}" class="btn btn--primary" style="margin-top: 1rem;">Create First Guest House</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

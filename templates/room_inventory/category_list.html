@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Room Categories — Room Inventory Management{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">Room Categories</h1>
+      <p style="color: var(--clr-text-muted); margin-top: 0.25rem;">Define and associate room categories (Single, Double King, Double Queen, Double Twin) with Guest Houses.</p>
+    </div>
+    <div>
+      <a href="{% url 'room_inventory:category-create' %}" class="btn btn--primary">+ Add Room Category</a>
+    </div>
+  </div>
+
+  <!-- Sub Navigation -->
+  <div style="display: flex; gap: 0.75rem; border-bottom: 2px solid var(--clr-border); padding-bottom: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap;">
+    <a href="{% url 'room_inventory:guesthouse-list' %}" class="btn btn--outline">Guest Houses</a>
+    <a href="{% url 'room_inventory:category-list' %}" class="btn btn--secondary" style="border-color: var(--clr-accent); color: var(--clr-accent); font-weight: 600;">Room Categories</a>
+    <a href="{% url 'room_inventory:room-list' %}" class="btn btn--outline">All Rooms</a>
+    <a href="{% url 'room_inventory:amenity-list' %}" class="btn btn--outline">Amenities</a>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
+    <form method="get" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <label style="font-weight: 600; font-size: 0.875rem;">Filter by Guest House:</label>
+      <select name="guest_house" class="form-control" style="max-width: 250px;" onchange="this.form.submit()">
+        <option value="">-- All Guest Houses --</option>
+        {% for gh in guest_houses %}
+        <option value="{{ gh.pk }}" {% if selected_gh_id == gh.pk %}selected{% endif %}>{{ gh.name }}</option>
+        {% endfor %}
+      </select>
+      {% if selected_gh_id %}
+      <a href="{% url 'room_inventory:category-list' %}" class="btn btn--sm btn--outline">Clear Filter</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Categories Table -->
+  {% if categories %}
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="table" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: var(--clr-surface-alt); text-align: left; font-size: 0.875rem; color: var(--clr-text-muted);">
+          <th style="padding: 1rem;">Category Name</th>
+          <th style="padding: 1rem;">Associated Guest House</th>
+          <th style="padding: 1rem;">Default Capacity</th>
+          <th style="padding: 1rem;">Description</th>
+          <th style="padding: 1rem;">Status</th>
+          <th style="padding: 1rem; text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr style="border-bottom: 1px solid var(--clr-border);">
+          <td style="padding: 1rem; font-weight: 600; font-size: 1rem;">{{ cat.name }}</td>
+          <td style="padding: 1rem;">
+            {% if cat.guest_house %}
+            <a href="{% url 'room_inventory:guesthouse-rooms' cat.guest_house.pk %}" style="color: var(--clr-accent); text-decoration: none;">🏢 {{ cat.guest_house.name }}</a>
+            {% else %}
+            <span style="color: var(--clr-text-muted);">All / Global</span>
+            {% endif %}
+          </td>
+          <td style="padding: 1rem;">👤 {{ cat.default_capacity }} guest(s)</td>
+          <td style="padding: 1rem; color: var(--clr-text-muted);">{{ cat.description|default:"—" }}</td>
+          <td style="padding: 1rem;">
+            {% if cat.is_active %}
+            <span class="badge badge--success">Active</span>
+            {% else %}
+            <span class="badge badge--warning">Inactive</span>
+            {% endif %}
+          </td>
+          <td style="padding: 1rem; text-align: right;">
+            <a href="{% url 'room_inventory:category-edit' cat.pk %}" class="btn btn--sm btn--outline">Edit</a>
+            <a href="{% url 'room_inventory:category-delete' cat.pk %}" class="btn btn--sm btn--danger">Delete</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card" style="text-align: center; padding: 3rem;">
+    <p style="font-size: 1.125rem; color: var(--clr-text-muted);">No room categories found.</p>
+    <a href="{% url 'room_inventory:category-create' %}" class="btn btn--primary" style="margin-top: 1rem;">Create First Category</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

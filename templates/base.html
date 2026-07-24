@@ -27,7 +27,11 @@
     <span>HSRS</span>
   </a>
   <span class="navbar__divider"></span>
-  <span class="navbar__module">Guest Room Booking</span>
+  <a href="{% url 'booking:my-bookings' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">📅 Bookings</a>
+  <span class="navbar__divider"></span>
+  <a href="{% url 'inventory:guesthouse-list' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">🏨 Room Inventory</a>
+  <span class="navbar__divider"></span>
+  <a href="{% url 'housekeeping:dashboard' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">🧹 Housekeeping</a>
 
   <div class="navbar__spacer"></div>
 

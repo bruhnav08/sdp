@@ -1,0 +1,19 @@
+<div class="modal" style="padding: 1.5rem;">
+  <h2 style="font-size: 1.25rem; font-weight: 700; margin-top: 0;">History — Room {{ room.room_number }} ({{ room.guest_house.name }})</h2>
+  <div style="max-height: 400px; overflow-y: auto;">
+    <ul style="list-style: none; padding: 0; margin: 0;">
+      {% for entry in history_entries %}
+      <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--clr-border);">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--clr-text);">
+          {{ entry.previous_status }} → <span style="color: var(--clr-accent);">{{ entry.new_status }}</span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--clr-text-muted);">
+          By {{ entry.changed_by.username|default:"System" }} &bull; {{ entry.timestamp|date:"d M Y H:i" }}
+        </div>
+      </li>
+      {% empty %}
+      <li style="color: var(--clr-text-muted);">No history records yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>

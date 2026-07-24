@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Amenities — Room Inventory Management{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width: 800px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">Amenity Management</h1>
+      <p style="color: var(--clr-text-muted); margin-top: 0.25rem;">Manage standard room amenities (Wi-Fi, AC, Attached Bathroom, TV) and add custom amenities.</p>
+    </div>
+  </div>
+
+  <!-- Sub Navigation -->
+  <div style="display: flex; gap: 0.75rem; border-bottom: 2px solid var(--clr-border); padding-bottom: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap;">
+    <a href="{% url 'room_inventory:guesthouse-list' %}" class="btn btn--outline">Guest Houses</a>
+    <a href="{% url 'room_inventory:category-list' %}" class="btn btn--outline">Room Categories</a>
+    <a href="{% url 'room_inventory:room-list' %}" class="btn btn--outline">All Rooms</a>
+    <a href="{% url 'room_inventory:amenity-list' %}" class="btn btn--secondary" style="border-color: var(--clr-accent); color: var(--clr-accent); font-weight: 600;">Amenities</a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    <!-- Add New Amenity Form -->
+    <div class="card">
+      <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 0; margin-bottom: 1rem;">Add New Amenity</h3>
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Amenity Name *</label>
+          {{ form.name }}
+          {% if form.name.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.85rem;">{{ form.name.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Icon / Emoji (Optional)</label>
+          {{ form.icon }}
+          {% if form.icon.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.85rem;">{{ form.icon.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          {{ form.is_active }}
+          <label style="font-weight: 500;">Active</label>
+        </div>
+
+        <button type="submit" class="btn btn--primary" style="width: 100%;">+ Save Amenity</button>
+      </form>
+    </div>
+
+    <!-- Amenities List -->
+    <div class="card">
+      <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 0; margin-bottom: 1rem;">Existing Amenities</h3>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        {% for amenity in amenities %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--clr-surface-alt); border-radius: var(--radius-md); border: 1px solid var(--clr-border);">
+          <div style="font-weight: 600; font-size: 0.95rem;">
+            <span>{{ amenity.icon }}</span>
+            <span style="margin-left: 0.25rem;">{{ amenity.name }}</span>
+          </div>
+          <div>
+            {% if amenity.is_active %}
+            <span class="badge badge--success">Active</span>
+            {% else %}
+            <span class="badge badge--warning">Disabled</span>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p style="color: var(--clr-text-muted);">No amenities found.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

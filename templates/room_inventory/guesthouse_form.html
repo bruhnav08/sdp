@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — Room Inventory Management{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width: 650px;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'room_inventory:guesthouse-list' %}" style="color: var(--clr-accent); text-decoration: none; font-size: 0.875rem;">← Back to Guest Houses</a>
+    <h1 style="font-size: 1.5rem; font-weight: 700; margin-top: 0.5rem;">{{ title }}</h1>
+  </div>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Guest House Name *</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.name.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Campus (Optional)</label>
+        {{ form.campus }}
+        {% if form.campus.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.campus.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Contact Number</label>
+        {{ form.contact_number }}
+        {% if form.contact_number.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.contact_number.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Description</label>
+        {{ form.description }}
+        {% if form.description.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.875rem;">{{ form.description.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        {{ form.is_active }}
+        <label style="font-weight: 500;">Active facility</label>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <a href="{% url 'room_inventory:guesthouse-list' %}" class="btn btn--outline">Cancel</a>
+        <button type="submit" class="btn btn--primary">Save Guest House</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

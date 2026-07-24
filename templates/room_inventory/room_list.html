@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Rooms — Room Inventory Management{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">Room Management</h1>
+      <p style="color: var(--clr-text-muted); margin-top: 0.25rem;">View and manage rooms, floors, capacities, amenities, and maintenance status.</p>
+    </div>
+    <div>
+      <a href="{% url 'room_inventory:room-create' %}" class="btn btn--primary">+ Add Room</a>
+    </div>
+  </div>
+
+  <!-- Sub Navigation -->
+  <div style="display: flex; gap: 0.75rem; border-bottom: 2px solid var(--clr-border); padding-bottom: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap;">
+    <a href="{% url 'room_inventory:guesthouse-list' %}" class="btn btn--outline">Guest Houses</a>
+    <a href="{% url 'room_inventory:category-list' %}" class="btn btn--outline">Room Categories</a>
+    <a href="{% url 'room_inventory:room-list' %}" class="btn btn--secondary" style="border-color: var(--clr-accent); color: var(--clr-accent); font-weight: 600;">All Rooms</a>
+    <a href="{% url 'room_inventory:amenity-list' %}" class="btn btn--outline">Amenities</a>
+  </div>
+
+  <!-- Multi-Filter Bar -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: end;">
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Guest House</label>
+        <select name="guest_house" class="form-control">
+          <option value="">All Guest Houses</option>
+          {% for gh in guest_houses %}
+          <option value="{{ gh.pk }}" {% if selected_gh == gh.pk %}selected{% endif %}>{{ gh.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Room Category</label>
+        <select name="category" class="form-control">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.pk }}" {% if selected_cat == cat.pk %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Status</label>
+        <select name="status" class="form-control">
+          <option value="">All Statuses</option>
+          {% for val, label in statuses %}
+          <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Amenity</label>
+        <select name="amenity" class="form-control">
+          <option value="">All Amenities</option>
+          {% for am in amenities %}
+          <option value="{{ am.pk }}" {% if selected_amenity == am.pk %}selected{% endif %}>{{ am.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem;">Search Room #</label>
+        <input type="text" name="search" class="form-control" placeholder="Search number..." value="{{ search_query }}">
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="btn btn--primary" style="flex: 1;">Filter</button>
+        <a href="{% url 'room_inventory:room-list' %}" class="btn btn--outline">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Rooms Table -->
+  {% if rooms %}
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="table" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: var(--clr-surface-alt); text-align: left; font-size: 0.875rem; color: var(--clr-text-muted);">
+          <th style="padding: 1rem;">Room #</th>
+          <th style="padding: 1rem;">Guest House</th>
+          <th style="padding: 1rem;">Floor</th>
+          <th style="padding: 1rem;">Category</th>
+          <th style="padding: 1rem;">Capacity</th>
+          <th style="padding: 1rem;">Amenities</th>
+          <th style="padding: 1rem;">Status</th>
+          <th style="padding: 1rem; text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for room in rooms %}
+        <tr style="border-bottom: 1px solid var(--clr-border);">
+          <td style="padding: 1rem; font-weight: 700; font-size: 1rem;">Room {{ room.room_number }}</td>
+          <td style="padding: 1rem; font-weight: 500;">🏢 {{ room.guest_house.name }}</td>
+          <td style="padding: 1rem;">{{ room.floor }}</td>
+          <td style="padding: 1rem;">{{ room.room_category.name|default:"Standard" }}</td>
+          <td style="padding: 1rem;">👤 {{ room.capacity }}</td>
+          <td style="padding: 1rem;">
+            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+              {% for amenity in room.amenities.all %}
+              <span class="badge" style="background: var(--clr-surface-alt); border: 1px solid var(--clr-border); font-size: 0.75rem;">{{ amenity.icon }} {{ amenity.name }}</span>
+              {% empty %}
+              <span style="color: var(--clr-text-muted); font-size: 0.85rem;">None</span>
+              {% endfor %}
+            </div>
+          </td>
+          <td style="padding: 1rem;">
+            {% if room.status == "VACANT_CLEAN" or room.status == "AVAILABLE" %}
+            <span class="badge badge--success" style="display: inline-flex; align-items: center; gap: 0.25rem;">🟢 Vacant Clean</span>
+            {% elif room.status == "VACANT_DIRTY" %}
+            <span class="badge badge--danger" style="display: inline-flex; align-items: center; gap: 0.25rem;">🔴 Vacant Dirty</span>
+            {% elif room.status == "CLEANING_IN_PROGRESS" %}
+            <span class="badge badge--warning" style="display: inline-flex; align-items: center; gap: 0.25rem;">🧹 Cleaning In Progress</span>
+            {% elif room.status == "OCCUPIED" %}
+            <span class="badge badge--info" style="display: inline-flex; align-items: center; gap: 0.25rem;">👤 Occupied</span>
+            {% elif room.status == "BLOCKED" %}
+            <span class="badge badge--warning" style="display: inline-flex; align-items: center; gap: 0.25rem;">🔒 Blocked</span>
+            {% else %}
+            <span class="badge badge--secondary" style="display: inline-flex; align-items: center; gap: 0.25rem;" title="Not available for booking">🛠️ Under Maintenance</span>
+            {% endif %}
+          </td>
+          <td style="padding: 1rem; text-align: right;">
+            <a href="{% url 'room_inventory:room-edit' room.pk %}" class="btn btn--sm btn--outline">Edit</a>
+            <a href="{% url 'room_inventory:room-delete' room.pk %}" class="btn btn--sm btn--danger">Delete</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card" style="text-align: center; padding: 3rem;">
+    <p style="font-size: 1.125rem; color: var(--clr-text-muted);">No rooms found matching criteria.</p>
+    <a href="{% url 'room_inventory:room-create' %}" class="btn btn--primary" style="margin-top: 1rem;">Create New Room</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

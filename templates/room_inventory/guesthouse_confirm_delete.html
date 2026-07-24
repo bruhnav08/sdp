@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Guest House — {{ guesthouse.name }}{% endblock %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width: 500px;">
+  <div class="card" style="text-align: center; padding: 2rem;">
+    <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--clr-danger); margin-top: 0;">Confirm Deletion</h1>
+    <p style="font-size: 1rem; margin-bottom: 1.5rem;">Are you sure you want to delete guest house <strong>"{{ guesthouse.name }}"</strong>?</p>
+    <p style="font-size: 0.875rem; color: var(--clr-text-muted); margin-bottom: 2rem;">This will also delete all associated rooms and category links.</p>
+
+    <form method="post" style="display: flex; gap: 1rem; justify-content: center;">
+      {% csrf_token %}
+      <a href="{% url 'room_inventory:guesthouse-list' %}" class="btn btn--outline">Cancel</a>
+      <button type="submit" class="btn btn--danger">Delete Guest House</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
