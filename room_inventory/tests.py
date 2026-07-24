@@ -129,3 +129,36 @@ class Module1RoomInventoryTest(TestCase):
         self.assertEqual(data["available_rooms"], 1)
         self.assertEqual(data["under_maintenance_rooms"], 1)
         self.assertEqual(data["blocked_rooms"], 1)
+
+    def test_rbac_permissions_for_roles(self):
+        """Verify role-based access control for room inventory endpoints."""
+        req_user = User.objects.create_user(username="req_user", password="password123", role=User.Role.REQUESTOR)
+        hod_user = User.objects.create_user(username="hod_user", password="password123", role=User.Role.HOD_DIRECTOR)
+        gh_user = User.objects.create_user(username="gh_user", password="password123", role=User.Role.GUEST_HOUSE_TEAM)
+
+        # 1. Requestor is blocked from room inventory views
+        self.client.force_login(req_user)
+        res = self.client.get(reverse("inventory:guesthouse-list"))
+        self.assertEqual(res.status_code, 403)
+        res_create = self.client.get(reverse("inventory:guesthouse-create"))
+        self.assertEqual(res_create.status_code, 403)
+
+        # 2. HOD is blocked from room inventory views
+        self.client.force_login(hod_user)
+        res = self.client.get(reverse("inventory:guesthouse-list"))
+        self.assertEqual(res.status_code, 403)
+
+        # 3. Guest House Team has operational read-only view of list, but blocked from creation
+        self.client.force_login(gh_user)
+        res = self.client.get(reverse("inventory:guesthouse-list"))
+        self.assertEqual(res.status_code, 200)
+        res_create = self.client.get(reverse("inventory:guesthouse-create"))
+        self.assertEqual(res_create.status_code, 403)
+
+        # 4. Admin has full access
+        self.client.force_login(self.user)
+        res = self.client.get(reverse("inventory:guesthouse-list"))
+        self.assertEqual(res.status_code, 200)
+        res_create = self.client.get(reverse("inventory:guesthouse-create"))
+        self.assertEqual(res_create.status_code, 200)
+

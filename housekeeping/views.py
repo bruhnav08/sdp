@@ -7,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import User
+from accounts.permissions import IsGuestHouseTeamOrAdmin, role_required
 from housekeeping.models import RoomStatusHistory
 from housekeeping.services import change_room_status, get_available_actions
 from room_inventory.models import GuestHouse, Room, RoomCategory
@@ -20,7 +22,7 @@ class RoomStatusView(APIView):
     Returns real room operational status and timestamp.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsGuestHouseTeamOrAdmin]
 
     def get(self, request):
         room_id = request.query_params.get("room")
@@ -50,6 +52,7 @@ class RoomStatusView(APIView):
 # ── Web UI Views ──────────────────────────────────────────────────────────────
 
 @login_required
+@role_required(User.Role.GUEST_HOUSE_TEAM, User.Role.ADMIN)
 def dashboard_view(request):
     """
     Enterprise Housekeeping & Room Status Dashboard.
@@ -114,6 +117,7 @@ def dashboard_view(request):
 
 
 @login_required
+@role_required(User.Role.GUEST_HOUSE_TEAM, User.Role.ADMIN)
 def change_room_status_view(request, pk):
     """
     Handles status transition POST request (supports HTMX partial response).
@@ -142,6 +146,7 @@ def change_room_status_view(request, pk):
 
 
 @login_required
+@role_required(User.Role.GUEST_HOUSE_TEAM, User.Role.ADMIN)
 def room_history_view(request, pk):
     """
     Room-specific audit log history view.
@@ -158,3 +163,4 @@ def room_history_view(request, pk):
         return render(request, "housekeeping/_room_history_modal.html", context)
 
     return render(request, "housekeeping/room_history.html", context)
+

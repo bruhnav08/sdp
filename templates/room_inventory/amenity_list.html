@@ -21,7 +21,7 @@
 
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
     <!-- Add New Amenity Form -->
-    <div class="card">
+    <div class="card" style="padding: 1.25rem;">
       <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 0; margin-bottom: 1rem;">Add New Amenity</h3>
       <form method="post">
         {% csrf_token %}
@@ -33,7 +33,7 @@
         </div>
 
         <div class="form-group" style="margin-bottom: 1rem;">
-          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Icon / Emoji (Optional)</label>
+          <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Icon Identifier (Optional)</label>
           {{ form.icon }}
           {% if form.icon.errors %}<div class="form-error" style="color: var(--clr-danger); font-size: 0.85rem;">{{ form.icon.errors }}</div>{% endif %}
         </div>
@@ -48,14 +48,13 @@
     </div>
 
     <!-- Amenities List -->
-    <div class="card">
+    <div class="card" style="padding: 1.25rem;">
       <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 0; margin-bottom: 1rem;">Existing Amenities</h3>
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
         {% for amenity in amenities %}
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--clr-surface-alt); border-radius: var(--radius-md); border: 1px solid var(--clr-border);">
           <div style="font-weight: 600; font-size: 0.95rem;">
-            <span>{{ amenity.icon }}</span>
-            <span style="margin-left: 0.25rem;">{{ amenity.name }}</span>
+            <span>{{ amenity.name }}</span>
           </div>
           <div>
             {% if amenity.is_active %}

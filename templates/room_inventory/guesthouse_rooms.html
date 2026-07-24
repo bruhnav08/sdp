@@ -6,13 +6,15 @@
 <div class="page-wrapper">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <a href="{% url 'room_inventory:guesthouse-list' %}" style="color: var(--clr-accent); text-decoration: none; font-size: 0.875rem;">← Back to Guest Houses</a>
+      <a href="{% url 'room_inventory:guesthouse-list' %}" style="color: var(--clr-accent); text-decoration: none; font-size: 0.875rem;">&larr; Back to Guest Houses</a>
       <h1 style="font-size: 1.75rem; font-weight: 700; margin-top: 0.25rem; margin-bottom: 0;">Rooms in {{ guesthouse.name }}</h1>
-      {% if guesthouse.campus %}<p style="color: var(--clr-text-muted); margin-top: 0.25rem;">📍 {{ guesthouse.campus.name }}</p>{% endif %}
+      {% if guesthouse.campus %}<p style="color: var(--clr-text-muted); margin-top: 0.25rem;">Campus: {{ guesthouse.campus.name }}</p>{% endif %}
     </div>
+    {% if user.is_admin_user %}
     <div>
       <a href="{% url 'room_inventory:room-create' %}?guest_house={{ guesthouse.pk }}" class="btn btn--primary">+ Add Room to {{ guesthouse.name }}</a>
     </div>
+    {% endif %}
   </div>
 
   {% if rooms %}
@@ -35,11 +37,11 @@
           <td style="padding: 1rem; font-weight: 600;">Room {{ room.room_number }}</td>
           <td style="padding: 1rem;">{{ room.floor }}</td>
           <td style="padding: 1rem;">{{ room.room_category.name|default:"Uncategorized" }}</td>
-          <td style="padding: 1rem;">👤 {{ room.capacity }}</td>
+          <td style="padding: 1rem;">{{ room.capacity }} guests</td>
           <td style="padding: 1rem;">
             <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
               {% for amenity in room.amenities.all %}
-              <span class="badge" style="background: var(--clr-surface-alt); border: 1px solid var(--clr-border); font-size: 0.75rem;">{{ amenity.icon }} {{ amenity.name }}</span>
+              <span class="badge" style="background: var(--clr-surface-alt); border: 1px solid var(--clr-border); font-size: 0.75rem;">{{ amenity.name }}</span>
               {% empty %}
               <span style="color: var(--clr-text-muted); font-size: 0.85rem;">None</span>
               {% endfor %}
@@ -47,22 +49,26 @@
           </td>
           <td style="padding: 1rem;">
             {% if room.status == "VACANT_CLEAN" or room.status == "AVAILABLE" %}
-            <span class="badge badge--success">🟢 Vacant Clean</span>
+            <span class="badge badge--success">Vacant Clean</span>
             {% elif room.status == "VACANT_DIRTY" %}
-            <span class="badge badge--danger">🔴 Vacant Dirty</span>
+            <span class="badge badge--danger">Vacant Dirty</span>
             {% elif room.status == "CLEANING_IN_PROGRESS" %}
-            <span class="badge badge--warning">🧹 Cleaning In Progress</span>
+            <span class="badge badge--warning">Cleaning In Progress</span>
             {% elif room.status == "OCCUPIED" %}
-            <span class="badge badge--info">👤 Occupied</span>
+            <span class="badge badge--info">Occupied</span>
             {% elif room.status == "BLOCKED" %}
-            <span class="badge badge--warning">🔒 Blocked</span>
+            <span class="badge badge--warning">Blocked</span>
             {% else %}
-            <span class="badge badge--secondary">🛠️ Under Maintenance</span>
+            <span class="badge badge--secondary">Under Maintenance</span>
             {% endif %}
           </td>
           <td style="padding: 1rem; text-align: right;">
+            {% if user.is_admin_user %}
             <a href="{% url 'room_inventory:room-edit' room.pk %}" class="btn btn--sm btn--outline">Edit</a>
             <a href="{% url 'room_inventory:room-delete' room.pk %}" class="btn btn--sm btn--danger">Delete</a>
+            {% else %}
+            <span style="font-size: 0.8rem; color: var(--clr-text-muted);">Read only</span>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -72,7 +78,9 @@
   {% else %}
   <div class="card" style="text-align: center; padding: 3rem;">
     <p style="font-size: 1.125rem; color: var(--clr-text-muted);">No rooms found in {{ guesthouse.name }}.</p>
+    {% if user.is_admin_user %}
     <a href="{% url 'room_inventory:room-create' %}?guest_house={{ guesthouse.pk }}" class="btn btn--primary" style="margin-top: 1rem;">Add First Room</a>
+    {% endif %}
   </div>
   {% endif %}
 </div>

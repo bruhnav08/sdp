@@ -27,11 +27,29 @@
     <span>HSRS</span>
   </a>
   <span class="navbar__divider"></span>
-  <a href="{% url 'booking:my-bookings' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">📅 Bookings</a>
+  <a href="{% url 'booking:my-bookings' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">Bookings</a>
+
+  {% if user.is_approver %}
   <span class="navbar__divider"></span>
-  <a href="{% url 'inventory:guesthouse-list' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">🏨 Room Inventory</a>
+  <a href="{% url 'booking:approvals' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">Approvals</a>
+  {% endif %}
+
+  {% if user.is_management %}
   <span class="navbar__divider"></span>
-  <a href="{% url 'housekeeping:dashboard' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">🧹 Housekeeping</a>
+  <a href="{% url 'booking:management-approvals' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">Management Approvals</a>
+  {% endif %}
+
+  {% if user.is_guest_house_team %}
+  <span class="navbar__divider"></span>
+  <a href="{% url 'booking:allotment' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">Room Allotment</a>
+  {% endif %}
+
+  {% if user.is_admin_user or user.is_guest_house_team %}
+  <span class="navbar__divider"></span>
+  <a href="{% url 'room_inventory:guesthouse-list' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">Room Inventory</a>
+  <span class="navbar__divider"></span>
+  <a href="{% url 'housekeeping:dashboard' %}" style="color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.875rem; padding: 0.35rem 0.65rem; border-radius: var(--radius-sm);">Housekeeping</a>
+  {% endif %}
 
   <div class="navbar__spacer"></div>
 

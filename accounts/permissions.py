@@ -119,6 +119,26 @@ class IsRequestorOrStaff(BasePermission):
         ) or request.user.is_staff
 
 
+class IsGuestHouseTeamOrAdmin(BasePermission):
+    """
+    Allows access to Guest House Team members OR Admin users.
+    Use on room status and operational inventory endpoints.
+    """
+
+    message = "You must be a Guest House Team member or Admin to perform this action."
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and (
+                request.user.role in (User.Role.GUEST_HOUSE_TEAM, User.Role.ADMIN)
+                or request.user.is_superuser
+                or request.user.is_staff
+            )
+        )
+
+
 class IsOwnerOrStaff(BasePermission):
     """
     Object-level permission: allow access only if the requesting user owns
@@ -140,3 +160,55 @@ class IsOwnerOrStaff(BasePermission):
         # Object must have a `requestor` attribute
         owner = getattr(obj, "requestor", None)
         return owner == request.user
+
+
+# ── Web View Permission Helpers (Django Session Views) ─────────────────────────
+
+from functools import wraps
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.mixins import AccessMixin
+
+
+def role_required(*allowed_roles):
+    """
+    Decorator for Django web views to enforce role access.
+    Usage:
+        @login_required
+        @role_required(User.Role.ADMIN)
+        def my_view(request): ...
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                from django.shortcuts import redirect
+                return redirect("accounts:login")
+            if (
+                request.user.is_superuser
+                or request.user.role in allowed_roles
+                or (User.Role.ADMIN in allowed_roles and (request.user.is_staff or request.user.is_admin_user))
+            ):
+                return view_func(request, *args, **kwargs)
+            raise PermissionDenied("You do not have permission to perform this action.")
+        return _wrapped_view
+    return decorator
+
+
+class RoleRequiredMixin(AccessMixin):
+    """
+    Mixin for class-based web views to enforce role access.
+    Set `allowed_roles = [User.Role.ADMIN, ...]` on the view class.
+    """
+    allowed_roles = ()
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if (
+            request.user.is_superuser
+            or request.user.role in self.allowed_roles
+            or (User.Role.ADMIN in self.allowed_roles and (request.user.is_staff or request.user.is_admin_user))
+        ):
+            return super().dispatch(request, *args, **kwargs)
+        raise PermissionDenied("You do not have permission to perform this action.")
+

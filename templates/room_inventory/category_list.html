@@ -9,9 +9,11 @@
       <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0;">Room Categories</h1>
       <p style="color: var(--clr-text-muted); margin-top: 0.25rem;">Define and associate room categories (Single, Double King, Double Queen, Double Twin) with Guest Houses.</p>
     </div>
+    {% if user.is_admin_user %}
     <div>
       <a href="{% url 'room_inventory:category-create' %}" class="btn btn--primary">+ Add Room Category</a>
     </div>
+    {% endif %}
   </div>
 
   <!-- Sub Navigation -->
@@ -19,7 +21,9 @@
     <a href="{% url 'room_inventory:guesthouse-list' %}" class="btn btn--outline">Guest Houses</a>
     <a href="{% url 'room_inventory:category-list' %}" class="btn btn--secondary" style="border-color: var(--clr-accent); color: var(--clr-accent); font-weight: 600;">Room Categories</a>
     <a href="{% url 'room_inventory:room-list' %}" class="btn btn--outline">All Rooms</a>
+    {% if user.is_admin_user %}
     <a href="{% url 'room_inventory:amenity-list' %}" class="btn btn--outline">Amenities</a>
+    {% endif %}
   </div>
 
   <!-- Filter Bar -->
@@ -58,12 +62,12 @@
           <td style="padding: 1rem; font-weight: 600; font-size: 1rem;">{{ cat.name }}</td>
           <td style="padding: 1rem;">
             {% if cat.guest_house %}
-            <a href="{% url 'room_inventory:guesthouse-rooms' cat.guest_house.pk %}" style="color: var(--clr-accent); text-decoration: none;">🏢 {{ cat.guest_house.name }}</a>
+            <a href="{% url 'room_inventory:guesthouse-rooms' cat.guest_house.pk %}" style="color: var(--clr-accent); text-decoration: none;">{{ cat.guest_house.name }}</a>
             {% else %}
             <span style="color: var(--clr-text-muted);">All / Global</span>
             {% endif %}
           </td>
-          <td style="padding: 1rem;">👤 {{ cat.default_capacity }} guest(s)</td>
+          <td style="padding: 1rem;">{{ cat.default_capacity }} guest(s)</td>
           <td style="padding: 1rem; color: var(--clr-text-muted);">{{ cat.description|default:"—" }}</td>
           <td style="padding: 1rem;">
             {% if cat.is_active %}
@@ -73,8 +77,12 @@
             {% endif %}
           </td>
           <td style="padding: 1rem; text-align: right;">
+            {% if user.is_admin_user %}
             <a href="{% url 'room_inventory:category-edit' cat.pk %}" class="btn btn--sm btn--outline">Edit</a>
             <a href="{% url 'room_inventory:category-delete' cat.pk %}" class="btn btn--sm btn--danger">Delete</a>
+            {% else %}
+            <span style="font-size: 0.8rem; color: var(--clr-text-muted);">Read only</span>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -84,7 +92,9 @@
   {% else %}
   <div class="card" style="text-align: center; padding: 3rem;">
     <p style="font-size: 1.125rem; color: var(--clr-text-muted);">No room categories found.</p>
+    {% if user.is_admin_user %}
     <a href="{% url 'room_inventory:category-create' %}" class="btn btn--primary" style="margin-top: 1rem;">Create First Category</a>
+    {% endif %}
   </div>
   {% endif %}
 </div>

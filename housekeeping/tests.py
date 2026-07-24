@@ -99,3 +99,38 @@ class HousekeepingModule2Test(TestCase):
         self.assertEqual(data["room_id"], self.room1.pk)
         self.assertEqual(data["status"], Room.Status.VACANT_DIRTY)
         self.assertEqual(data["room_number"], "101")
+
+    def test_housekeeping_rbac_permissions(self):
+        """Verify Requestors and HODs cannot access housekeeping views/API, but GH Team and Admin can."""
+        req_user = User.objects.create_user(username="req_user_hk", password="password123", role=User.Role.REQUESTOR)
+        hod_user = User.objects.create_user(username="hod_user_hk", password="password123", role=User.Role.HOD_DIRECTOR)
+        admin_user = User.objects.create_superuser(username="admin_user_hk", email="adminhk@example.com", password="password123")
+
+        url = reverse("housekeeping_ui:dashboard")
+
+        # 1. Requestor is blocked
+        self.client.force_login(req_user)
+        self.assertEqual(self.client.get(url).status_code, 403)
+
+        # 2. HOD is blocked
+        self.client.force_login(hod_user)
+        self.assertEqual(self.client.get(url).status_code, 403)
+
+        # 3. Guest House Team has access
+        self.client.force_login(self.staff_user)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+        # 4. Admin has access
+        self.client.force_login(admin_user)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+        # Check API protection
+        api_url = reverse("housekeeping:room-status")
+        api_client = APIClient()
+
+        api_client.force_authenticate(user=req_user)
+        self.assertEqual(api_client.get(f"{api_url}?room={self.room1.pk}").status_code, 403)
+
+        api_client.force_authenticate(user=self.staff_user)
+        self.assertEqual(api_client.get(f"{api_url}?room={self.room1.pk}").status_code, 200)
+

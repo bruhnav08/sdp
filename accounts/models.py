@@ -78,7 +78,7 @@ class User(AbstractUser):
 
     @property
     def is_admin_user(self) -> bool:
-        return self.role == self.Role.ADMIN
+        return self.role == self.Role.ADMIN or self.is_superuser or self.is_staff
 
     def get_dashboard_url(self) -> str:
         """

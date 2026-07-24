@@ -6,21 +6,27 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import User
+from accounts.permissions import role_required
 from room_inventory.forms import AmenityForm, GuestHouseForm, RoomCategoryForm, RoomForm
 from room_inventory.models import Amenity, Campus, Event, GuestHouse, Room, RoomCategory
 from room_inventory.serializers import CampusSerializer, EventSerializer, GuestHouseSerializer
 
 
 def ensure_default_amenities():
-    """Ensure standard amenities exist in database."""
+    """Ensure standard amenities exist in database without emoji icons."""
     defaults = [
-        ("Wi-Fi", "📶"),
-        ("AC", "❄️"),
-        ("Attached Bathroom", "🚿"),
-        ("TV", "📺"),
+        ("Wi-Fi", ""),
+        ("AC", ""),
+        ("Attached Bathroom", ""),
+        ("TV", ""),
     ]
     for name, icon in defaults:
-        Amenity.objects.get_or_create(name=name, defaults={"icon": icon, "is_active": True})
+        amenity, created = Amenity.objects.get_or_create(name=name, defaults={"icon": icon, "is_active": True})
+        if not created and amenity.icon in ("📶", "❄️", "🚿", "📺"):
+            amenity.icon = ""
+            amenity.save()
+
 
 
 # ── DRF API Views (Contract preserved & updated) ─────────────────────────────
@@ -119,6 +125,7 @@ class EventListView(APIView):
 # ── Web Management Views (HTML UI for Module 1) ───────────────────────────────
 
 @login_required
+@role_required(User.Role.ADMIN, User.Role.GUEST_HOUSE_TEAM)
 def guesthouse_list(request):
     """View all guest houses with quick stats and room drill-down."""
     ensure_default_amenities()
@@ -145,6 +152,7 @@ def guesthouse_list(request):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def guesthouse_create(request):
     """Add a new guest house (supports quick-add via GET query param)."""
     quick_name = request.GET.get("quick_add")
@@ -165,6 +173,7 @@ def guesthouse_create(request):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def guesthouse_edit(request, pk):
     """Edit an existing guest house."""
     gh = get_object_or_404(GuestHouse, pk=pk)
@@ -181,6 +190,7 @@ def guesthouse_edit(request, pk):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def guesthouse_delete(request, pk):
     """Delete a guest house."""
     gh = get_object_or_404(GuestHouse, pk=pk)
@@ -194,7 +204,9 @@ def guesthouse_delete(request, pk):
 
 
 @login_required
+@role_required(User.Role.ADMIN, User.Role.GUEST_HOUSE_TEAM)
 def guesthouse_rooms(request, pk):
+
     """View all rooms belonging to a specific guest house."""
     gh = get_object_or_404(GuestHouse, pk=pk)
     rooms = gh.rooms.all().select_related("room_category").prefetch_related("amenities")
@@ -204,6 +216,7 @@ def guesthouse_rooms(request, pk):
 # ── Room Category Views ───────────────────────────────────────────────────────
 
 @login_required
+@role_required(User.Role.ADMIN, User.Role.GUEST_HOUSE_TEAM)
 def category_list(request):
     """View all room categories, optionally filtered by Guest House."""
     gh_id = request.GET.get("guest_house")
@@ -224,6 +237,7 @@ def category_list(request):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def category_create(request):
     """Create a room category and associate it with a guest house."""
     initial_gh = request.GET.get("guest_house")
@@ -244,6 +258,7 @@ def category_create(request):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def category_edit(request, pk):
     """Edit room category."""
     cat = get_object_or_404(RoomCategory, pk=pk)
@@ -260,6 +275,7 @@ def category_edit(request, pk):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def category_delete(request, pk):
     """Delete room category."""
     cat = get_object_or_404(RoomCategory, pk=pk)
@@ -275,6 +291,7 @@ def category_delete(request, pk):
 # ── Room Views ────────────────────────────────────────────────────────────────
 
 @login_required
+@role_required(User.Role.ADMIN, User.Role.GUEST_HOUSE_TEAM)
 def room_list(request):
     """List all rooms with filtering by Guest House, Category, Status, Amenity."""
     ensure_default_amenities()
@@ -320,6 +337,7 @@ def room_list(request):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def room_create(request):
     """Create a new room."""
     ensure_default_amenities()
@@ -342,6 +360,7 @@ def room_create(request):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def room_edit(request, pk):
     """Edit an existing room."""
     ensure_default_amenities()
@@ -360,6 +379,7 @@ def room_edit(request, pk):
 
 
 @login_required
+@role_required(User.Role.ADMIN)
 def room_delete(request, pk):
     """Delete a room."""
     room = get_object_or_404(Room, pk=pk)
@@ -377,6 +397,7 @@ def room_delete(request, pk):
 # ── Amenity Views ─────────────────────────────────────────────────────────────
 
 @login_required
+@role_required(User.Role.ADMIN)
 def amenity_list_create(request):
     """View and create amenities dynamically."""
     ensure_default_amenities()
@@ -391,3 +412,4 @@ def amenity_list_create(request):
         form = AmenityForm()
 
     return render(request, "room_inventory/amenity_list.html", {"amenities": amenities, "form": form})
+

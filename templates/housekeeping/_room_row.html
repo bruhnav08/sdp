@@ -1,13 +1,13 @@
 <tr id="room-row-{{ room.pk }}" style="border-bottom: 1px solid var(--clr-border);">
-  <td style="padding: 1rem; font-weight: 600;">🏢 {{ room.guest_house.name }}</td>
+  <td style="padding: 1rem; font-weight: 600;">{{ room.guest_house.name }}</td>
   <td style="padding: 1rem; font-weight: 700; font-size: 1rem;">Room {{ room.room_number }}</td>
   <td style="padding: 1rem;">{{ room.floor }}</td>
   <td style="padding: 1rem;">{{ room.room_category.name|default:"Standard" }}</td>
-  <td style="padding: 1rem;">👤 {{ room.capacity }}</td>
+  <td style="padding: 1rem;">{{ room.capacity }} guests</td>
   <td style="padding: 1rem;">
     <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
       {% for am in room.amenities.all %}
-      <span class="badge" style="background: var(--clr-surface-alt); border: 1px solid var(--clr-border); font-size: 0.75rem;">{{ am.icon }} {{ am.name }}</span>
+      <span class="badge" style="background: var(--clr-surface-alt); border: 1px solid var(--clr-border); font-size: 0.75rem;">{{ am.name }}</span>
       {% empty %}
       <span style="color: var(--clr-text-muted); font-size: 0.85rem;">None</span>
       {% endfor %}
@@ -15,19 +15,19 @@
   </td>
   <td style="padding: 1rem;">
     {% if room.status == "VACANT_CLEAN" %}
-    <span class="status-badge status--vacant-clean">🟢 Vacant Clean</span>
+    <span class="status-badge status--vacant-clean">Vacant Clean</span>
     {% elif room.status == "VACANT_DIRTY" %}
-    <span class="status-badge status--vacant-dirty">🔴 Vacant Dirty</span>
+    <span class="status-badge status--vacant-dirty">Vacant Dirty</span>
     {% elif room.status == "CLEANING_IN_PROGRESS" %}
-    <span class="status-badge status--cleaning-in-progress">🧹 Cleaning In Progress</span>
+    <span class="status-badge status--cleaning-in-progress">Cleaning In Progress</span>
     {% elif room.status == "OCCUPIED" %}
-    <span class="status-badge status--occupied">👤 Occupied</span>
+    <span class="status-badge status--occupied">Occupied</span>
     {% elif room.status == "UNDER_MAINTENANCE" %}
-    <span class="status-badge status--under-maintenance">🛠️ Under Maintenance</span>
+    <span class="status-badge status--under-maintenance">Under Maintenance</span>
     {% elif room.status == "BLOCKED" %}
-    <span class="status-badge status--blocked">🔒 Blocked</span>
+    <span class="status-badge status--blocked">Blocked</span>
     {% else %}
-    <span class="status-badge status--vacant-clean">🟢 {{ room.get_status_display }}</span>
+    <span class="status-badge status--vacant-clean">{{ room.get_status_display }}</span>
     {% endif %}
   </td>
   <td style="padding: 1rem; font-size: 0.8rem; color: var(--clr-text-muted);">
@@ -48,7 +48,7 @@
       </form>
       {% endfor %}
 
-      <a href="{% url 'housekeeping:room-history' room.pk %}" class="btn btn--sm btn--outline" style="font-size: 0.75rem; padding: 0.3rem 0.5rem;" title="View audit history log">📜 History</a>
+      <a href="{% url 'housekeeping:room-history' room.pk %}" class="btn btn--sm btn--outline" style="font-size: 0.75rem; padding: 0.3rem 0.5rem;" title="View audit history log">History</a>
     </div>
   </td>
 </tr>
